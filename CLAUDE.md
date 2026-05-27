@@ -38,6 +38,22 @@ mutao/
 │   ├── matcher.rs  # 图匹配引擎：DFS 多节点交换环发现
 │   ├── store.rs    # 数据访问层
 │   └── error.rs    # 统一错误处理
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── page.tsx           # 首页
+│   │   │   ├── items/page.tsx     # 物品列表
+│   │   │   ├── items/new/page.tsx # 发布物品
+│   │   │   ├── items/[id]/page.tsx# 物品详情
+│   │   │   ├── demands/page.tsx   # 交换意向
+│   │   │   └── cycles/page.tsx    # 交换环
+│   │   ├── components/
+│   │   │   ├── nav.tsx            # 导航栏
+│   │   │   └── ui/button.tsx      # 按钮组件
+│   │   └── lib/
+│   │       ├── api.ts             # API 客户端
+│   │       └── utils.ts           # 工具函数
+│   └── package.json
 ├── scalpel/
 │   ├── scalpel.py      # Python AI 手术刀（规则引擎 + LLM 降级）
 │   └── test_scalpel.py # Python 测试
@@ -65,9 +81,22 @@ mutao/
 | GET | /api/items | 物品列表 |
 | GET | /api/items/:id | 物品详情 |
 | POST | /api/items/:id/match | 触发匹配 |
+| PATCH | /api/items/:id/status | 更新物品状态 |
 | POST | /api/demands | 创建交换意向（含验证） |
 | GET | /api/demands | 意向列表 |
 | GET | /api/cycles | 交换环列表 |
+| POST | /api/cycles/:id/confirm | 确认交换 |
+
+## 前端路由
+
+| 路径 | 说明 |
+|---|---|
+| / | 首页（导航入口） |
+| /items | 物品列表（卡片布局） |
+| /items/new | 发布物品（表单） |
+| /items/[id] | 物品详情（触发匹配） |
+| /demands | 交换意向列表 |
+| /cycles | 交换环列表（确认交换） |
 
 ## 测试
 

@@ -136,7 +136,7 @@ test_returns_dict_structure ✅
 ### 短期（P0）
 
 - [x] 设计多链合约统一接口（以太坊、Solana、Move 系）
-- [ ] 前端技术栈落地（Next.js + shadcn/ui + WASM）
+- [x] 前端技术栈落地（Next.js + shadcn/ui + WASM）
 - [x] 配置 pre-commit hooks
 
 ### 中期（P1）
@@ -196,6 +196,22 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 
 ---
 
+### 2026-05-27 Phase 4 - 前端页面
+
+| 模块 | 状态 | 说明 |
+|------|------|------|
+| API 客户端 | ✅ | `src/lib/api.ts`，封装所有后端接口 |
+| 导航栏 | ✅ | `src/components/nav.tsx`，4 个路由入口 |
+| 首页 | ✅ | 更新文案、添加导航链接 |
+| 物品列表页 | ✅ | `/items`，卡片布局、状态标签 |
+| 发布物品页 | ✅ | `/items/new`，表单验证、价值滑块 |
+| 物品详情页 | ✅ | `/items/[id]`，触发匹配、展示交换环 |
+| 交换意向页 | ✅ | `/demands`，提供/想要标签展示 |
+| 交换环页 | ✅ | `/cycles`，确认交换功能 |
+| 布局 | ✅ | 中文元数据、导航栏集成 |
+
+---
+
 ## 七、问题与解决方案
 
 | 问题 | 解决方案 |
@@ -208,3 +224,4 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 | 缺少依赖审计 | 添加 cargo-deny |
 | 缺少 pre-commit | 添加 pre-commit-config.yaml |
 | 缺少 CHANGELOG | 添加 git-cliff |
+| Button 不支持 asChild | 去掉 asChild，直接在 Link 上用 button 样式 |
