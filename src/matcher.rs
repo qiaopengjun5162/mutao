@@ -118,6 +118,7 @@ impl Matcher {
         b.iter().any(|s| set.contains(s.as_str()))
     }
 
+    /// 检查候选环是否已存在于结果集中（排序后比较，忽略顺序差异）
     fn exists(cycles: &[SwapCycle], candidate: &SwapCycle) -> bool {
         let mut cand: Vec<(Uuid, Uuid)> = candidate
             .swaps
@@ -125,17 +126,14 @@ impl Matcher {
             .map(|leg| (leg.offer_item_id, leg.want_item_id))
             .collect();
         cand.sort();
-        for c in cycles {
+        cycles.iter().any(|c| {
             let mut exist: Vec<(Uuid, Uuid)> = c
                 .swaps
                 .iter()
                 .map(|leg| (leg.offer_item_id, leg.want_item_id))
                 .collect();
             exist.sort();
-            if cand == exist {
-                return true;
-            }
-        }
-        false
+            cand == exist
+        })
     }
 }

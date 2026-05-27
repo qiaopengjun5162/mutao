@@ -8,7 +8,17 @@ use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation}
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-const JWT_SECRET: &[u8] = b"mutao-secret-change-in-production";
+/// JWT 密钥，优先从环境变量读取，兜底用内置值（生产环境必须设置 JWT_SECRET）
+fn jwt_secret() -> &'static [u8] {
+    static SECRET: std::sync::OnceLock<Vec<u8>> = std::sync::OnceLock::new();
+    SECRET
+        .get_or_init(|| {
+            std::env::var("JWT_SECRET")
+                .unwrap_or_else(|_| "mutao-secret-change-in-production".into())
+                .into_bytes()
+        })
+        .as_slice()
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
@@ -45,7 +55,7 @@ pub fn create_token(user_id: Uuid, username: &str) -> Result<String, StatusCode>
     encode(
         &Header::default(),
         &claims,
-        &EncodingKey::from_secret(JWT_SECRET),
+        &EncodingKey::from_secret(jwt_secret()),
     )
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
@@ -53,7 +63,7 @@ pub fn create_token(user_id: Uuid, username: &str) -> Result<String, StatusCode>
 pub fn verify_token(token: &str) -> Result<Claims, StatusCode> {
     decode::<Claims>(
         token,
-        &DecodingKey::from_secret(JWT_SECRET),
+        &DecodingKey::from_secret(jwt_secret()),
         &Validation::default(),
     )
     .map(|data| data.claims)

@@ -27,22 +27,9 @@ impl IntoResponse for AppError {
         let (status, message) = match &self {
             AppError::NotFound => (StatusCode::NOT_FOUND, self.to_string()),
             AppError::BadRequest(_) => (StatusCode::BAD_REQUEST, self.to_string()),
-            AppError::Internal(_) => {
+            // 内部错误不暴露细节给客户端，只记日志
+            AppError::Internal(_) | AppError::InternalMsg(_) | AppError::Serialization(_) => {
                 tracing::error!("内部错误: {self}");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "服务器内部错误".to_string(),
-                )
-            }
-            AppError::InternalMsg(_) => {
-                tracing::error!("内部错误: {self}");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "服务器内部错误".to_string(),
-                )
-            }
-            AppError::Serialization(_) => {
-                tracing::error!("序列化错误: {self}");
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     "服务器内部错误".to_string(),

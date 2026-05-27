@@ -102,10 +102,13 @@ impl Store {
         let cycles: Vec<SwapCycle> = rows
             .into_iter()
             .filter_map(|r| {
-                let mut cycle: SwapCycle = serde_json::from_value(r.data).ok().or_else(|| {
-                    tracing::warn!("反序列化 swap_cycle 失败, id={}", r.id);
-                    None
-                })?;
+                let mut cycle: SwapCycle = match serde_json::from_value(r.data) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        tracing::warn!("反序列化 swap_cycle 失败, id={}, err={}", r.id, e);
+                        return None;
+                    }
+                };
                 cycle.id = r.id;
                 Some(cycle)
             })
