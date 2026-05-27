@@ -141,7 +141,7 @@ test_returns_dict_structure ✅
 
 ### 中期（P1）
 
-- [x] 用户认证（JWT）
+- [x] 用户认证（JWT + 注册/登录端点）
 - [x] 物品状态流转（Idle → Matching → Completed）
 - [x] 交换确认流程
 - [ ] WebSocket 实时通知
@@ -196,7 +196,7 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 
 ---
 
-### 2026-05-27 Phase 4 - 前端页面
+### 2026-05-27 Phase 4 - 前端页面 + 用户认证
 
 | 模块 | 状态 | 说明 |
 |------|------|------|
@@ -209,6 +209,11 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 | 交换意向页 | ✅ | `/demands`，提供/想要标签展示 |
 | 交换环页 | ✅ | `/cycles`，确认交换功能 |
 | 布局 | ✅ | 中文元数据、导航栏集成 |
+| 用户注册 | ✅ | POST /api/auth/register，bcrypt 加密 |
+| 用户登录 | ✅ | POST /api/auth/login，JWT token |
+| 登录页 | ✅ | /auth/login，表单验证 |
+| 注册页 | ✅ | /auth/register，密码确认 |
+| Auth 测试 | ✅ | 3 个单元测试（token 创建/验证/序列化） |
 
 ---
 
