@@ -142,8 +142,8 @@ test_returns_dict_structure ✅
 ### 中期（P1）
 
 - [x] 用户认证（JWT）
-- [ ] 物品状态流转（Idle → Matching → Completed）
-- [ ] 交换确认流程
+- [x] 物品状态流转（Idle → Matching → Completed）
+- [x] 交换确认流程
 - [ ] WebSocket 实时通知
 
 ### 长期（P2）
