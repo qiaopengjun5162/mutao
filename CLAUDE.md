@@ -1,0 +1,124 @@
+# 木桃 (Mutao) — 项目文档
+
+> "投我以木桃，报之以琼瑶。" —《诗经》
+>
+> AI 撮合 + Web3 溯源的免现金实体易物平台，面向数字游民与青年社区。
+
+## 快速开始
+
+```bash
+# 确保 PostgreSQL 运行中
+just db-init
+
+# 启动
+cp .env.example .env  # 编辑 DATABASE_URL
+cargo run
+
+# API 在 http://localhost:3000
+```
+
+## 技术栈
+
+| 层 | 技术 | 职责 |
+|---|---|---|
+| 核心引擎 | Rust (axum + tokio) | API 路由、图匹配算法、状态机 |
+| 持久化 | PostgreSQL (sqlx) | 物品、需求、交换环存盘 |
+| AI 手术刀 | Python | 图片/文本 → 标签 + 价值梯度 |
+| Web3 存证 | Solidity | 物品流转履历上链（多链接口设计中） |
+| 前端（规划中） | Next.js + shadcn/ui + WASM | 用户界面 |
+
+## 项目结构
+
+```
+mutao/
+├── src/
+│   ├── main.rs     # axum 路由 + 处理器
+│   ├── lib.rs      # 库入口
+│   ├── models.rs   # 领域模型：Item, Demand, SwapCycle, SwapLeg
+│   ├── matcher.rs  # 图匹配引擎：DFS 多节点交换环发现
+│   ├── store.rs    # 数据访问层
+│   └── error.rs    # 统一错误处理
+├── scalpel/
+│   ├── scalpel.py      # Python AI 手术刀（规则引擎 + LLM 降级）
+│   └── test_scalpel.py # Python 测试
+├── contracts/
+│   └── MutaoSwapHistory.sol  # Web3 存证合约
+├── tests/
+│   ├── matcher_test.rs  # 匹配引擎测试 (5 个)
+│   └── models_test.rs   # 模型层测试 (8 个)
+├── migrations/
+│   └── 001_init.sql     # 数据库建表
+├── .github/workflows/
+│   └── ci.yml           # CI/CD 配置
+├── Justfile             # 自动化命令集
+├── PROGRESS.md          # 项目进度记录
+├── .env                 # 环境变量
+└── Cargo.toml
+```
+
+## API 端点
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | /api/health | 健康检查 |
+| POST | /api/items | 创建物品（含验证） |
+| GET | /api/items | 物品列表 |
+| GET | /api/items/:id | 物品详情 |
+| POST | /api/items/:id/match | 触发匹配 |
+| POST | /api/demands | 创建交换意向（含验证） |
+| GET | /api/demands | 意向列表 |
+| GET | /api/cycles | 交换环列表 |
+
+## 测试
+
+```bash
+cargo nextest run             # Rust 测试 (13 个)
+cd scalpel && pytest -v       # Python 测试 (10 个)
+just test-all                 # 全部测试
+cargo llvm-cov nextest --html # 覆盖率报告
+```
+
+## 代码质量
+
+```bash
+cargo fmt                     # 格式化
+cargo clippy -- -D warnings   # 静态分析
+just check-all                # 全面检查（格式 + Clippy + 测试）
+```
+
+## 数据库
+
+```bash
+just db-init                  # 初始化
+just db-reset                 # 重置
+just db-schema                # 查看表结构
+```
+
+## 核心算法
+
+`matcher::Matcher::find_cycles()` 在有向图中使用 DFS 搜索长度 2~4 的交换环：
+
+1. 建边：`Demand[i].offer_tags` 与 `Demand[j].target_tags` 有交集时，`i → j`
+2. DFS：从每个节点出发，搜索回到起点的有向环
+3. 过滤：去重、同用户去重、验证环闭合
+
+## Session 记录 — 2026-05-27
+
+### Phase 1 - 核心引擎
+- Rust 匹配引擎 + axum API
+- 重构：内存存储 → PostgreSQL (sqlx)
+- 修复：`build_cycle` 中 `want_item_id` 多人环计算错误
+- 修复：同一用户多个 Demand 出现自己换自己
+
+### Phase 2 - 质量提升
+- 补充模型层测试 (8 个)、Python 测试 (10 个)
+- 重构：提取 `store.rs` 数据访问层
+- 统一错误处理：`AppError` 枚举
+- 添加输入验证：title、tags、value_tier
+- 配置 Justfile 自动化命令集
+- 配置 GitHub Actions CI/CD
+
+### 待办
+- 设计多链合约统一接口（以太坊、Solana、Move 系）
+- 前端技术栈落地（Next.js + shadcn/ui + WASM）
+- 用户认证、WebSocket 通知

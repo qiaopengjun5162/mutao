@@ -1,0 +1,6 @@
+/target
+.env
+*.log
+scalpel/__pycache__/
+scalpel/.pytest_cache/
+*.pyc

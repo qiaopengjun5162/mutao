@@ -1,0 +1,135 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: 测试
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: mutao_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: 缓存依赖
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: 安装 cargo-nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: 安装 cargo-llvm-cov
+        uses: taiki-e/install-action@llvm-cov
+
+      - name: 检查格式
+        run: cargo fmt --check
+
+      - name: Clippy 静态分析
+        run: cargo clippy -- -D warnings
+
+      - name: 初始化测试数据库
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/mutao_test
+        run: |
+          psql -h localhost -U postgres -d mutao_test -f migrations/001_init.sql
+
+      - name: 运行测试
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/mutao_test
+        run: cargo nextest run
+
+      - name: 生成覆盖率报告
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/mutao_test
+        run: cargo llvm-cov nextest --lcov --output-path lcov.info
+
+      - name: 上传覆盖率到 Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: lcov.info
+          fail_ci_if_error: false
+
+  python-test:
+    name: Python 测试
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 安装依赖
+        run: |
+          cd scalpel
+          pip install pytest
+
+      - name: 运行 Python 测试
+        run: |
+          cd scalpel
+          python -m pytest -v
+
+  build:
+    name: 构建
+    runs-on: ubuntu-latest
+    needs: [test, python-test]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 缓存依赖
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: 构建发布版本
+        run: cargo build --release
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutao
+          path: target/release/mutao
