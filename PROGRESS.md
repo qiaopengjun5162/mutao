@@ -1,6 +1,6 @@
 # 木桃 Mutao - 项目进度记录
 
-> 更新时间：2026-05-27
+> 更新时间：2026-05-28
 >
 > 仓库地址：https://github.com/qiaopengjun5162/mutao
 
@@ -144,7 +144,7 @@ test_returns_dict_structure ✅
 - [x] 用户认证（JWT + 注册/登录端点）
 - [x] 物品状态流转（Idle → Matching → Completed）
 - [x] 交换确认流程
-- [ ] WebSocket 实时通知
+- [x] WebSocket 实时通知
 
 ### 长期（P2）
 
@@ -193,6 +193,22 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 | rustfmt.toml | ✅ | 详细格式化配置 |
 | thiserror | ✅ | 升级错误处理 |
 | CI 增强 | ✅ | taplo + deny + typos + 自动 Release |
+
+---
+
+### 2026-05-28 Phase 5 - WebSocket + 代码优化
+
+| 任务 | 状态 | 说明 |
+|------|------|------|
+| JWT_SECRET 环境变量化 | ✅ | OnceLock 线程安全读取 |
+| error.rs 匹配分支合并 | ✅ | 减少重复代码 |
+| matcher.rs exists 优化 | ✅ | iter().any() 替代手动循环 |
+| store.rs 错误处理修复 | ✅ | 反序列化失败正确记录错误 |
+| WebSocket 模块 | ✅ | WsHub 广播 + 连接管理 |
+| WebSocket 路由 | ✅ | GET /api/ws |
+| 匹配通知 | ✅ | match_found 事件 |
+| 确认通知 | ✅ | swap_confirmed 事件 |
+| AppState 重构 | ✅ | 移至 lib.rs 全局共享 |
 
 ---
 

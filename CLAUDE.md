@@ -37,6 +37,8 @@ mutao/
 │   ├── models.rs   # 领域模型：Item, Demand, SwapCycle, SwapLeg
 │   ├── matcher.rs  # 图匹配引擎：DFS 多节点交换环发现
 │   ├── store.rs    # 数据访问层
+│   ├── auth.rs     # JWT 认证 + 中间件
+│   ├── ws.rs       # WebSocket 实时通知
 │   └── error.rs    # 统一错误处理
 ├── frontend/
 │   ├── src/
@@ -86,6 +88,9 @@ mutao/
 | GET | /api/demands | 意向列表 |
 | GET | /api/cycles | 交换环列表 |
 | POST | /api/cycles/:id/confirm | 确认交换 |
+| POST | /api/auth/register | 用户注册 |
+| POST | /api/auth/login | 用户登录 |
+| GET | /api/ws | WebSocket 实时通知 |
 
 ## 前端路由
 
@@ -149,5 +154,6 @@ just db-schema                # 查看表结构
 
 ### 待办
 - 设计多链合约统一接口（以太坊、Solana、Move 系）
-- 前端技术栈落地（Next.js + shadcn/ui + WASM）
-- 用户认证、WebSocket 通知
+- 图片上传 + AI 标签提取集成
+- Web3 存证端到端打通
+- 移动端 H5
