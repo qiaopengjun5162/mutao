@@ -117,13 +117,13 @@ test_returns_dict_structure ✅
 
 ### 短期（P0）
 
-- [ ] 设计多链合约统一接口（以太坊、Solana、Move 系）
+- [x] 设计多链合约统一接口（以太坊、Solana、Move 系）
 - [ ] 前端技术栈落地（Next.js + shadcn/ui + WASM）
-- [ ] 配置 pre-commit hooks
+- [x] 配置 pre-commit hooks
 
 ### 中期（P1）
 
-- [ ] 用户认证（JWT）
+- [x] 用户认证（JWT）
 - [ ] 物品状态流转（Idle → Matching → Completed）
 - [ ] 交换确认流程
 - [ ] WebSocket 实时通知
