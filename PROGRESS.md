@@ -111,6 +111,24 @@ test_returns_dict_structure ✅
 - `value_tier`：必须在 1-5 之间
 - `offer_tags` / `target_tags`：不能为空
 
+### 物品状态流转
+
+**问题**：物品状态没有转换规则，可能出现非法状态变更
+
+**方案**：
+- 在 `ItemStatus` 枚举添加 `can_transition_to()` 和 `available_transitions()`
+- 状态机：Idle → Matching → Completed → Archized
+- Matching 可回退到 Idle（取消匹配）
+- 添加 PATCH /api/items/:id/status 端点
+
+### 交换确认流程
+
+**问题**：匹配成功后没有确认机制
+
+**方案**：
+- 添加 POST /api/cycles/:id/confirm 端点
+- 确认后自动将交换环中所有物品标记为 Completed
+
 ---
 
 ## 五、待办事项
