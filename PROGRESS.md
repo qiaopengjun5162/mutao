@@ -164,12 +164,29 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 
 ---
 
+### 2026-05-27 Phase 3 - 移植 rust-template 最佳实践
+
+| 任务 | 状态 | 说明 |
+|------|------|------|
+| pre-commit hooks | ✅ | 8 个基础检查 + Rust/Python 专用 |
+| cargo-deny | ✅ | 依赖审计（许可证、安全漏洞） |
+| git-cliff | ✅ | 自动生成 CHANGELOG |
+| typos | ✅ | 拼写检查 |
+| rustfmt.toml | ✅ | 详细格式化配置 |
+| thiserror | ✅ | 升级错误处理 |
+| CI 增强 | ✅ | taplo + deny + typos + 自动 Release |
+
+---
+
 ## 七、问题与解决方案
 
 | 问题 | 解决方案 |
 |------|----------|
 | main.rs 过于臃肿 | 提取 store.rs 数据访问层 |
-| 错误处理不统一 | 定义 AppError 枚举 |
+| 错误处理不统一 | 定义 AppError 枚举 + thiserror |
 | 缺少输入验证 | 在 handler 中添加验证逻辑 |
 | 测试覆盖不足 | 补充模型层和 Python 测试 |
 | CI/CD 缺失 | 配置 GitHub Actions |
+| 缺少依赖审计 | 添加 cargo-deny |
+| 缺少 pre-commit | 添加 pre-commit-config.yaml |
+| 缺少 CHANGELOG | 添加 git-cliff |
