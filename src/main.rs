@@ -45,6 +45,7 @@ async fn main() {
         .route("/api/items/:id", get(get_item))
         .route("/api/items/:id/match", post(match_item))
         .route("/api/items/:id/status", axum::routing::patch(update_item_status))
+        .route("/api/cycles/:id/confirm", post(confirm_swap))
         .route("/api/demands", post(create_demand).get(list_demands))
         .route("/api/cycles", get(list_cycles))
         .route("/api/health", get(health))
@@ -184,6 +185,33 @@ async fn match_item(
 
 async fn list_cycles(State(s): State<SharedState>) -> Result<Json<Vec<SwapCycle>>, AppError> {
     Ok(Json(s.store.list_cycles().await?))
+}
+
+async fn confirm_swap(
+    State(s): State<SharedState>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let cycles = s.store.list_cycles().await?;
+    let cycle = cycles
+        .iter()
+        .find(|c| c.id == id)
+        .ok_or(AppError::NotFound)?;
+
+    // 将交换环中所有物品标记为 Completed
+    for leg in &cycle.swaps {
+        s.store
+            .update_item_status(leg.offer_item_id, &ItemStatus::Completed)
+            .await
+            .ok();
+    }
+
+    tracing::info!("交换环 {} 已确认，{} 个物品完成交换", id, cycle.swaps.len());
+
+    Ok(Json(serde_json::json!({
+        "cycle_id": id,
+        "status": "confirmed",
+        "items_completed": cycle.swaps.len()
+    })))
 }
 
 #[derive(Deserialize)]
