@@ -14,12 +14,9 @@ use mutao::error::AppError;
 use mutao::matcher;
 use mutao::models::{Demand, Item, ItemStatus, SwapCycle, User};
 use mutao::store::Store;
+use mutao::ws::{WsHub, WsNotification};
 
-struct AppState {
-    store: Store,
-}
-
-type SharedState = Arc<AppState>;
+type SharedState = Arc<mutao::AppState>;
 
 #[tokio::main]
 async fn main() {
@@ -37,8 +34,9 @@ async fn main() {
 
     tracing::info!("数据库连接成功");
 
-    let state = Arc::new(AppState {
+    let state = Arc::new(mutao::AppState {
         store: Store::new(pool),
+        ws_hub: WsHub::new(),
     });
 
     let app = Router::new()
@@ -52,6 +50,7 @@ async fn main() {
         .route("/api/demands", post(create_demand).get(list_demands))
         .route("/api/cycles", get(list_cycles))
         .route("/api/health", get(health))
+        .route("/api/ws", get(mutao::ws::ws_handler))
         .with_state(state);
 
     let addr = "0.0.0.0:3000";
@@ -183,6 +182,17 @@ async fn match_item(
         s.store.save_cycle(cycle).await.ok();
     }
 
+    // 匹配成功时广播通知
+    if !cycles.is_empty() {
+        s.ws_hub.notify(&WsNotification {
+            event: "match_found".into(),
+            data: serde_json::json!({
+                "item_id": id,
+                "cycles_count": cycles.len(),
+            }),
+        });
+    }
+
     Ok(Json(cycles))
 }
 
@@ -209,6 +219,15 @@ async fn confirm_swap(
     }
 
     tracing::info!("交换环 {} 已确认，{} 个物品完成交换", id, cycle.swaps.len());
+
+    // 广播交换确认通知
+    s.ws_hub.notify(&WsNotification {
+        event: "swap_confirmed".into(),
+        data: serde_json::json!({
+            "cycle_id": id,
+            "items_completed": cycle.swaps.len(),
+        }),
+    });
 
     Ok(Json(serde_json::json!({
         "cycle_id": id,
