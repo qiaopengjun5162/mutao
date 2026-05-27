@@ -1,7 +1,7 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::models::{Demand, Item, ItemStatus, SwapCycle};
+use crate::models::{Demand, Item, ItemStatus, SwapCycle, User};
 
 /// 数据访问层，封装所有 PostgreSQL 操作
 pub struct Store {
@@ -136,6 +136,32 @@ impl Store {
             .await?;
         Ok(result.rows_affected() > 0)
     }
+
+    // ---- User ----
+
+    pub async fn create_user(&self, user: &User) -> Result<(), sqlx::Error> {
+        sqlx::query(
+            r#"INSERT INTO users (id, username, password_hash, created_at)
+               VALUES ($1, $2, $3, $4)"#,
+        )
+        .bind(user.id)
+        .bind(&user.username)
+        .bind(&user.password_hash)
+        .bind(user.created_at)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn get_user_by_username(&self, username: &str) -> Result<Option<User>, sqlx::Error> {
+        let row = sqlx::query_as::<_, UserRow>(
+            r#"SELECT id, username, password_hash, created_at FROM users WHERE username = $1"#,
+        )
+        .bind(username)
+        .fetch_optional(&self.pool)
+        .await?;
+        Ok(row.map(|r| r.into_user()))
+    }
 }
 
 // ---- Database Row types ----
@@ -203,4 +229,23 @@ struct CycleRow {
     data: serde_json::Value,
     #[allow(dead_code)]
     created_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(sqlx::FromRow)]
+struct UserRow {
+    id: Uuid,
+    username: String,
+    password_hash: String,
+    created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl UserRow {
+    fn into_user(self) -> User {
+        User {
+            id: self.id,
+            username: self.username,
+            password_hash: self.password_hash,
+            created_at: self.created_at,
+        }
+    }
 }

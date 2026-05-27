@@ -9,9 +9,10 @@ use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 use uuid::Uuid;
 
+use mutao::auth;
 use mutao::error::AppError;
 use mutao::matcher;
-use mutao::models::{Demand, Item, ItemStatus, SwapCycle};
+use mutao::models::{Demand, Item, ItemStatus, SwapCycle, User};
 use mutao::store::Store;
 
 struct AppState {
@@ -41,6 +42,8 @@ async fn main() {
     });
 
     let app = Router::new()
+        .route("/api/auth/register", post(register))
+        .route("/api/auth/login", post(login))
         .route("/api/items", post(create_item).get(list_items))
         .route("/api/items/:id", get(get_item))
         .route("/api/items/:id/match", post(match_item))
@@ -242,4 +245,89 @@ async fn update_item_status(
     let mut updated = item;
     updated.status = req.status;
     Ok(Json(updated))
+}
+
+// ---- Auth ----
+
+#[derive(Deserialize)]
+struct RegisterReq {
+    username: String,
+    password: String,
+}
+
+/// 用户注册：创建新用户，返回 JWT token
+async fn register(
+    State(s): State<SharedState>,
+    Json(req): Json<RegisterReq>,
+) -> Result<Json<auth::LoginRes>, AppError> {
+    // 验证输入
+    if req.username.trim().is_empty() {
+        return Err(AppError::BadRequest("用户名不能为空".into()));
+    }
+    if req.password.len() < 6 {
+        return Err(AppError::BadRequest("密码长度至少 6 位".into()));
+    }
+
+    // 检查用户名是否已存在
+    if s.store.get_user_by_username(&req.username).await?.is_some() {
+        return Err(AppError::BadRequest("用户名已存在".into()));
+    }
+
+    // 创建用户
+    let password_hash = bcrypt::hash(&req.password, bcrypt::DEFAULT_COST)
+        .map_err(|e| AppError::InternalMsg(format!("密码加密失败: {e}")))?;
+
+    let user = User {
+        id: Uuid::new_v4(),
+        username: req.username.clone(),
+        password_hash,
+        created_at: chrono::Utc::now(),
+    };
+
+    s.store.create_user(&user).await?;
+
+    // 生成 token
+    let token = auth::create_token(user.id, &user.username)
+        .map_err(|_| AppError::InternalMsg("生成 token 失败".into()))?;
+
+    tracing::info!("用户 {} 注册成功", user.username);
+
+    Ok(Json(auth::LoginRes {
+        token,
+        user_id: user.id,
+        username: user.username,
+    }))
+}
+
+/// 用户登录：验证凭据，返回 JWT token
+async fn login(
+    State(s): State<SharedState>,
+    Json(req): Json<auth::LoginReq>,
+) -> Result<Json<auth::LoginRes>, AppError> {
+    // 查找用户
+    let user = s
+        .store
+        .get_user_by_username(&req.username)
+        .await?
+        .ok_or(AppError::BadRequest("用户名或密码错误".into()))?;
+
+    // 验证密码
+    let valid = bcrypt::verify(&req.password, &user.password_hash)
+        .map_err(|e| AppError::InternalMsg(format!("密码验证失败: {e}")))?;
+
+    if !valid {
+        return Err(AppError::BadRequest("用户名或密码错误".into()));
+    }
+
+    // 生成 token
+    let token = auth::create_token(user.id, &user.username)
+        .map_err(|_| AppError::InternalMsg("生成 token 失败".into()))?;
+
+    tracing::info!("用户 {} 登录成功", user.username);
+
+    Ok(Json(auth::LoginRes {
+        token,
+        user_id: user.id,
+        username: user.username,
+    }))
 }

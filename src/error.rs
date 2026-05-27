@@ -15,6 +15,9 @@ pub enum AppError {
     #[error("服务器内部错误")]
     Internal(#[from] sqlx::Error),
 
+    #[error("{0}")]
+    InternalMsg(String),
+
     #[error("序列化错误: {0}")]
     Serialization(#[from] serde_json::Error),
 }
@@ -25,6 +28,13 @@ impl IntoResponse for AppError {
             AppError::NotFound => (StatusCode::NOT_FOUND, self.to_string()),
             AppError::BadRequest(_) => (StatusCode::BAD_REQUEST, self.to_string()),
             AppError::Internal(_) => {
+                tracing::error!("内部错误: {self}");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "服务器内部错误".to_string(),
+                )
+            }
+            AppError::InternalMsg(_) => {
                 tracing::error!("内部错误: {self}");
                 (
                     StatusCode::INTERNAL_SERVER_ERROR,

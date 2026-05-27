@@ -1,5 +1,22 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
+// Auth types
+export interface LoginRes {
+  token: string;
+  user_id: string;
+  username: string;
+}
+
+export interface RegisterReq {
+  username: string;
+  password: string;
+}
+
+export interface LoginReq {
+  username: string;
+  password: string;
+}
+
 export interface Item {
   id: string;
   owner_id: string;
@@ -63,6 +80,19 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  // Auth
+  register: (data: RegisterReq) =>
+    request<LoginRes>("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  login: (data: LoginReq) =>
+    request<LoginRes>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  // Items
   listItems: () => request<Item[]>("/api/items"),
   getItem: (id: string) => request<Item>(`/api/items/${id}`),
   createItem: (data: CreateItemReq) =>

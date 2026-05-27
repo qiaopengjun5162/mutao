@@ -75,3 +75,38 @@ pub async fn auth_middleware(mut req: Request, next: Next) -> Result<Response, S
     req.extensions_mut().insert(claims);
     Ok(next.run(req).await)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_and_verify_token() {
+        let user_id = Uuid::new_v4();
+        let username = "testuser";
+        let token = create_token(user_id, username).unwrap();
+
+        let claims = verify_token(&token).unwrap();
+        assert_eq!(claims.sub, user_id);
+        assert_eq!(claims.username, username);
+    }
+
+    #[test]
+    fn test_verify_invalid_token() {
+        let result = verify_token("invalid-token");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_claims_serialization() {
+        let user_id = Uuid::new_v4();
+        let token = create_token(user_id, "alice").unwrap();
+        let claims = verify_token(&token).unwrap();
+
+        // token 应该包含正确的用户信息
+        assert_eq!(claims.sub, user_id);
+        assert_eq!(claims.username, "alice");
+        // exp 应该在未来
+        assert!(claims.exp > chrono::Utc::now().timestamp() as usize);
+    }
+}

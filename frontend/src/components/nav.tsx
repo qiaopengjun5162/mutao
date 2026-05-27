@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+// 导航栏：左侧品牌、中间功能入口、右侧登录/注册
 export function Nav() {
   return (
     <nav className="border-b bg-background">
@@ -22,6 +23,20 @@ export function Nav() {
               {link.label}
             </Link>
           ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/auth/login"
+            className="px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+          >
+            登录
+          </Link>
+          <Link
+            href="/auth/register"
+            className="px-3 py-2 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            注册
+          </Link>
         </div>
       </div>
     </nav>

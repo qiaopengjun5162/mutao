@@ -88,3 +88,13 @@ impl SwapCycle {
         })
     }
 }
+
+/// 用户
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct User {
+    pub id: Uuid,
+    pub username: String,
+    #[serde(skip_serializing)]
+    pub password_hash: String,
+    pub created_at: DateTime<Utc>,
+}
