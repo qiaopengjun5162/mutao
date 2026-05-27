@@ -1,6 +1,8 @@
 # 木桃 Mutao - 项目进度记录
 
 > 更新时间：2026-05-27
+>
+> 仓库地址：https://github.com/qiaopengjun5162/mutao
 
 ## 一、项目概述
 
