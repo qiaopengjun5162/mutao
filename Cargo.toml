@@ -17,3 +17,4 @@ sqlx = { version = "0.7", features = ["runtime-tokio", "postgres", "uuid", "chro
 deadpool = "0.10"
 dotenvy = "0.15"
 thiserror = "2"
+async-trait = "0.1"
