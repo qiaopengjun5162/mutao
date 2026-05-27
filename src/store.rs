@@ -116,12 +116,25 @@ impl Store {
 
     pub async fn item_exists(&self, id: Uuid) -> Result<bool, sqlx::Error> {
         let exists = sqlx::query_scalar::<_, bool>(
-            "SELECT EXISTS(SELECT 1 FROM items WHERE id = $1)"
+            "SELECT EXISTS(SELECT 1 FROM items WHERE id = $1)",
         )
         .bind(id)
         .fetch_one(&self.pool)
         .await?;
         Ok(exists)
+    }
+
+    pub async fn update_item_status(
+        &self,
+        id: Uuid,
+        status: &ItemStatus,
+    ) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query("UPDATE items SET status = $1 WHERE id = $2")
+            .bind(format!("{:?}", status))
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        Ok(result.rows_affected() > 0)
     }
 }
 

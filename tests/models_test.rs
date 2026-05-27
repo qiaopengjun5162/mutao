@@ -122,3 +122,28 @@ fn test_demand_serialization_roundtrip() {
     assert_eq!(demand.id, back.id);
     assert_eq!(demand.offer_tags, back.offer_tags);
 }
+
+#[test]
+fn test_item_status_transitions() {
+    assert!(ItemStatus::Idle.can_transition_to(&ItemStatus::Matching));
+    assert!(!ItemStatus::Idle.can_transition_to(&ItemStatus::Completed));
+    
+    assert!(ItemStatus::Matching.can_transition_to(&ItemStatus::Completed));
+    assert!(ItemStatus::Matching.can_transition_to(&ItemStatus::Idle));
+    assert!(!ItemStatus::Matching.can_transition_to(&ItemStatus::Matching));
+    
+    assert!(ItemStatus::Completed.can_transition_to(&ItemStatus::Archived));
+    assert!(!ItemStatus::Completed.can_transition_to(&ItemStatus::Idle));
+    
+    assert!(ItemStatus::Archived.available_transitions().is_empty());
+}
+
+#[test]
+fn test_available_transitions() {
+    let idle_transitions = ItemStatus::Idle.available_transitions();
+    assert_eq!(idle_transitions, vec![ItemStatus::Matching]);
+    
+    let matching_transitions = ItemStatus::Matching.available_transitions();
+    assert!(matching_transitions.contains(&ItemStatus::Completed));
+    assert!(matching_transitions.contains(&ItemStatus::Idle));
+}

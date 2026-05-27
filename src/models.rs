@@ -11,6 +11,30 @@ pub enum ItemStatus {
     Archived,
 }
 
+impl ItemStatus {
+    /// 检查状态转换是否合法
+    pub fn can_transition_to(&self, target: &ItemStatus) -> bool {
+        matches!(
+            (self, target),
+            (ItemStatus::Idle, ItemStatus::Matching)
+                | (ItemStatus::Matching, ItemStatus::Completed)
+                | (ItemStatus::Matching, ItemStatus::Idle)
+                | (ItemStatus::Completed, ItemStatus::Archived)
+                | (_, ItemStatus::Archived)
+        )
+    }
+
+    /// 获取可用的下一个状态
+    pub fn available_transitions(&self) -> Vec<ItemStatus> {
+        match self {
+            ItemStatus::Idle => vec![ItemStatus::Matching],
+            ItemStatus::Matching => vec![ItemStatus::Completed, ItemStatus::Idle],
+            ItemStatus::Completed => vec![ItemStatus::Archived],
+            ItemStatus::Archived => vec![],
+        }
+    }
+}
+
 /// 核心实体：闲置物品
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Item {

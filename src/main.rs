@@ -44,6 +44,7 @@ async fn main() {
         .route("/api/items", post(create_item).get(list_items))
         .route("/api/items/:id", get(get_item))
         .route("/api/items/:id/match", post(match_item))
+        .route("/api/items/:id/status", axum::routing::patch(update_item_status))
         .route("/api/demands", post(create_demand).get(list_demands))
         .route("/api/cycles", get(list_cycles))
         .route("/api/health", get(health))
@@ -183,4 +184,34 @@ async fn match_item(
 
 async fn list_cycles(State(s): State<SharedState>) -> Result<Json<Vec<SwapCycle>>, AppError> {
     Ok(Json(s.store.list_cycles().await?))
+}
+
+#[derive(Deserialize)]
+struct UpdateStatusReq {
+    status: ItemStatus,
+}
+
+async fn update_item_status(
+    State(s): State<SharedState>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    Json(req): Json<UpdateStatusReq>,
+) -> Result<Json<Item>, AppError> {
+    let item = s
+        .store
+        .get_item(id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    if !item.status.can_transition_to(&req.status) {
+        return Err(AppError::BadRequest(format!(
+            "不能从 {:?} 转换到 {:?}",
+            item.status, req.status
+        )));
+    }
+
+    s.store.update_item_status(id, &req.status).await?;
+
+    let mut updated = item;
+    updated.status = req.status;
+    Ok(Json(updated))
 }
