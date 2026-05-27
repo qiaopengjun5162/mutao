@@ -8,21 +8,21 @@ default:
 
 # 检查代码
 check:
-    cargo check
+    cargo check --all-features
 
 # 构建项目
 build:
-    cargo build
+    cargo build --all-features
 
 # 构建发布版本
 release:
-    cargo build --release
+    cargo build --release --all-features
 
 # ---- 测试 ----
 
 # 运行所有 Rust 测试
 test:
-    cargo nextest run
+    cargo nextest run --all-features
 
 # 运行测试并生成覆盖率报告
 test-coverage:
@@ -43,14 +43,30 @@ fmt:
 
 # 检查格式
 fmt-check:
-    cargo fmt --check
+    cargo fmt --all -- --check
+
+# TOML 格式化
+toml-fmt:
+    taplo fmt --option reorder_keys=true
+
+# 检查 TOML 格式
+toml-fmt-check:
+    taplo fmt --option reorder_keys=true --check
 
 # Clippy 静态分析
 clippy:
-    cargo clippy -- -D warnings
+    cargo clippy --all-targets --all-features --tests -- -D warnings
+
+# 依赖审计
+deny:
+    cargo deny check
+
+# 拼写检查
+typos:
+    typos
 
 # 全面检查（格式 + Clippy + 测试）
-check-all: fmt-check clippy test
+check-all: fmt-check toml-fmt-check clippy deny test
 
 # ---- 数据库 ----
 
@@ -90,13 +106,21 @@ clean:
 docs:
     cargo doc --open
 
+# 生成 CHANGELOG
+changelog:
+    git cliff -o CHANGELOG.md
+
 # ---- Git ----
 
 # 提交前检查
-pre-commit: fmt-check clippy test
+pre-commit: fmt-check toml-fmt-check clippy deny test
     @echo "Pre-commit 检查通过！"
 
 # 创建提交
 commit msg:
     git add -A
     git commit -m "{{msg}}"
+
+# 帮助
+help:
+    @just --list
