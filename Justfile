@@ -70,10 +70,10 @@ check-all: fmt-check toml-fmt-check clippy deny test
 
 # ---- 数据库 ----
 
-# 初始化数据库
+# 初始化数据库（按顺序执行所有迁移）
 db-init:
     createdb mutao 2>/dev/null || true
-    psql mutao < migrations/001_init.sql
+    for f in migrations/*.sql; do psql mutao < "$$f"; done
 
 # 重置数据库
 db-reset:
