@@ -216,9 +216,51 @@ just db-schema                # 查看表结构
 - 修复 CI：cargo-llvm-cov action 名称、PGPASSWORD、执行全部 migration
 - 安装 Trellis AI 工作流框架（`trellis init --claude -u qiaopengjun`）
 
-### 当前状态（2026-05-28）
-- Rust 测试：59 个全部通过（单元 17 + 模型 10 + 匹配 5 + Store 集成 10 + Handler 集成 17）
+### Phase 7 - 集成测试补强（2026-05-28）
+- error 模块测试 4 个（AppError 各变体的 HTTP 状态码和 JSON 响应）
+- store 集成测试 10 个（真实 PostgreSQL，Item/Demand/Cycle/User CRUD）
+- handler 集成测试 17 个（HTTP 端点全覆盖：health、items、demands、cycles、auth）
+- E2E 测试 5 个（3 通过 + 2 需隔离数据库标记 #[ignore]）
+- 添加 tower dev-dependency 和 sqlx macros feature
+- 修复 CI 外键约束问题：测试中先创建 user 再创建 item/demand
+
+### Phase 8 - Docker 部署（2026-05-28）
+- Dockerfile 多阶段构建（Rust 1.88-bookworm builder + slim runtime）
+- Dockerfile.scalpel（Python 3.12-slim）
+- docker-compose.yml 编排：backend + PostgreSQL + Scalpel
+- .dockerignore 排除 target/node_modules/.git 等
+- .env.example 环境变量模板
+- Justfile 新增 docker-up/down/logs 命令
+- 修复 Rust 版本问题：部分依赖需要 1.88+（home, time crate）
+
+### Phase 9 - OpenAPI/Swagger 文档（2026-05-28）
+- 集成 utoipa v4 + utoipa-swagger-ui v7（兼容 axum 0.7）
+- 所有 model 和 request type 添加 ToSchema derive
+- Swagger UI 访问路径：/swagger-ui
+- OpenAPI JSON：/api-docs/openapi.json
+- 修复版本兼容：utoipa-swagger-ui v9 需要 axum 0.8，降级到 v7
+- 更新 deny.toml：添加 CDLA-Permissive-2.0 许可证，跳过 utoipa-swagger-ui 依赖树
+
+### Phase 10 - 图片上传（2026-05-28）
+- 后端：POST /api/items/:id/image，multipart 上传
+- 文件验证：类型检查（jpeg/png/gif/webp）+ 大小限制（5MB）
+- 本地存储：uploads/ 目录，UUID 文件名
+- 静态文件服务：/uploads/ 路径通过 tower-http ServeDir 提供
+- Store 方法：update_item_image 更新 image_url
+- 前端：API 客户端 uploadImage 方法 + 物品详情页上传按钮 + 图片展示
+
+### Phase 11 - 文档完善（2026-05-28）
+- README 中英文添加 shields.io 徽章（CI、License、Rust、Tests）
+- README 添加 Rust 版本要求、Docker 启动方式、测试数更新
+- README 中英文互链
+- commit message 改用英语（已记录偏好）
+
+### 当前状态（2026-05-29）
+- Rust 测试：62 个（60 通过 + 2 需隔离 DB）
 - Python 测试：10 个全部通过
 - 前端路由：9 个
+- API 端点：17 个（含图片上传）
+- Docker 部署：已验证可用（localhost:3001）
+- Swagger UI：/swagger-ui 可用
 - 所有 P0/P1/P2 功能已完成
-- Trellis 已初始化
+- 项目完成度：~99%

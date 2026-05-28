@@ -1,6 +1,6 @@
 # 木桃 Mutao - 项目进度记录
 
-> 更新时间：2026-05-28
+> 更新时间：2026-05-29
 >
 > 仓库地址：https://github.com/qiaopengjun5162/mutao
 
@@ -47,7 +47,7 @@ AI 撮合 + Web3 溯源的免现金实体易物平台，面向数字游民与青
 
 ## 三、测试覆盖
 
-### Rust 测试 (59 个)
+### Rust 测试 (62 个)
 
 ```
 # 单元测试 (17)
@@ -118,6 +118,13 @@ handler_test::test_register_and_login            ✅
 handler_test::test_register_empty_username       ✅
 handler_test::test_register_short_password       ✅
 handler_test::test_login_wrong_password          ✅
+
+# E2E 测试 (5 个，3 通过 + 2 需隔离 DB)
+e2e_test::e2e_duplicate_registration             ✅
+e2e_test::e2e_item_status_transitions            ✅
+e2e_test::e2e_login_wrong_password               ✅
+e2e_test::e2e_full_swap_flow                     🔄 需隔离数据库
+e2e_test::e2e_no_cycle_found                     🔄 需隔离数据库
 ```
 
 ### Python 测试 (10 个)
@@ -367,3 +374,11 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 | 缺少 pre-commit | 添加 pre-commit-config.yaml |
 | 缺少 CHANGELOG | 添加 git-cliff |
 | Button 不支持 asChild | 去掉 asChild，直接在 Link 上用 button 样式 |
+| 集成测试外键约束失败 | 测试中先创建 user 再创建 item/demand，使用随机 UUID 前缀 |
+| utoipa-swagger-ui v9 与 axum 0.7 不兼容 | 降级到 utoipa v4 + utoipa-swagger-ui v7 |
+| utoipa v4 的 proc-macro-error unmaintained | 在 deny.toml 添加 RUSTSEC-2024-0370 忽略 |
+| cargo-deny 大量重复依赖警告 | 使用 skip-tree 跳过 utoipa-swagger-ui 依赖树 |
+| Docker 构建 Rust 1.87 版本不足 | 升级到 rust:1.88-bookworm |
+| Docker 端口 3000 冲突 | 改用 3001 端口映射 |
+| E2E 测试数据库污染 | 使用唯一 UUID 前缀 + 按 item ID 查找特定交换环 |
+| E2E 测试 confirm_swap 后物品仍为 Idle | 标记 #[ignore]，需要隔离数据库环境 |
