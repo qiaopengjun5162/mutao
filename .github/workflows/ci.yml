@@ -83,8 +83,12 @@ jobs:
 
       - name: 初始化测试数据库
         env:
+          PGPASSWORD: postgres
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/mutao_test
-        run: psql -h localhost -U postgres -d mutao_test -f migrations/001_init.sql
+        run: |
+          psql -h localhost -U postgres -d mutao_test -f migrations/001_init.sql
+          psql -h localhost -U postgres -d mutao_test -f migrations/002_users.sql
+          psql -h localhost -U postgres -d mutao_test -f migrations/003_indexes.sql
 
       - name: 运行测试
         env:
