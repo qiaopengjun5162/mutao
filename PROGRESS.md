@@ -208,6 +208,9 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 | store.rs 测试 | ✅ | 5 个内联测试（Row 转换、状态变体） |
 | 消除 unwrap() | ✅ | main.rs 改为 `async fn main() -> Result<(), Box<dyn Error>>` |
 | taplo 格式化 | ✅ | Cargo.toml、deny.toml 格式修复 |
+| pre-commit 安装 | ✅ | 之前配置了但未安装到 .git/hooks/，已修复 |
+| CI 修复 | ✅ | cargo-llvm-cov action 名称、PGPASSWORD、执行全部 migration |
+| Trellis 初始化 | ✅ | `trellis init --claude -u qiaopengjun`，生成 AGENTS.md + .trellis/ |
 
 ### 2026-05-28 Phase 5 - WebSocket + 代码优化
 

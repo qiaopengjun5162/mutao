@@ -197,9 +197,13 @@ just db-schema                # 查看表结构
 - 补充测试：ws.rs(5) + store.rs(5) = 10 个新测试
 - 消除 unwrap()：main.rs 改为 `async fn main() -> Result<(), Box<dyn Error>>`
 - taplo 格式化修复
+- 安装 pre-commit hooks（之前配置了但未安装到 .git/hooks/）
+- 修复 CI：cargo-llvm-cov action 名称、PGPASSWORD、执行全部 migration
+- 安装 Trellis AI 工作流框架（`trellis init --claude -u qiaopengjun`）
 
 ### 当前状态（2026-05-28）
 - Rust 测试：28 个全部通过
 - Python 测试：10 个全部通过
 - 前端路由：9 个
 - 所有 P0/P1/P2 功能已完成
+- Trellis 已初始化
