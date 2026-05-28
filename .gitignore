@@ -1,5 +1,6 @@
 /target
 .env
+uploads/
 *.log
 scalpel/__pycache__/
 scalpel/.pytest_cache/

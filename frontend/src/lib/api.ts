@@ -128,6 +128,22 @@ export const api = {
       { method: "POST", body: JSON.stringify({ text }) }
     ),
 
+  // 图片上传
+  uploadImage: (itemId: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return fetch(`${API_BASE}/api/items/${itemId}/image`, {
+      method: "POST",
+      body: formData,
+    }).then(async (res) => {
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `上传失败: ${res.status}`);
+      }
+      return res.json() as Promise<{ image_url: string; size: number }>;
+    });
+  },
+
   // Web3 存证
   attestItem: (id: string, chain?: string) =>
     request<{ item_id: string; chain: string; tx_hash: string }>(

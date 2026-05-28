@@ -27,6 +27,7 @@ export default function ItemDetailPage({
   const [error, setError] = useState("");
   const [aiResult, setAiResult] = useState<{ tags: string[]; value_tier: number; method: string } | null>(null);
   const [attestResult, setAttestResult] = useState<{ tx_hash: string; chain: string } | null>(null);
+  const [uploading, setUploading] = useState(false);
   const { notifications } = useWs();
 
   useEffect(() => {
@@ -65,6 +66,22 @@ export default function ItemDetailPage({
       setError(e instanceof Error ? e.message : "AI 分析失败");
     } finally {
       setAnalyzing(false);
+    }
+  };
+
+  // 图片上传
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !item) return;
+    setUploading(true);
+    setError("");
+    try {
+      const result = await api.uploadImage(item.id, file);
+      setItem({ ...item, image_url: result.image_url });
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "上传失败");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -112,6 +129,15 @@ export default function ItemDetailPage({
           ))}
         </div>
 
+        {/* 物品图片 */}
+        {item.image_url && (
+          <img
+            src={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}${item.image_url}`}
+            alt={item.title}
+            className="w-full max-h-80 object-contain rounded-md mb-4"
+          />
+        )}
+
         <div className="grid grid-cols-2 gap-4 text-sm mb-6">
           <div>
             <span className="text-muted-foreground">价值等级:</span>{" "}
@@ -138,6 +164,12 @@ export default function ItemDetailPage({
               {matching ? "匹配中..." : "触发匹配"}
             </Button>
           )}
+          <label className="flex-1">
+            <input type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+            <Button asChild variant="outline" className="w-full cursor-pointer" disabled={uploading}>
+              <span>{uploading ? "上传中..." : "上传图片"}</span>
+            </Button>
+          </label>
           <Button onClick={handleAnalyze} disabled={analyzing} variant="outline" className="flex-1">
             {analyzing ? "AI 分析中..." : "AI 标签提取"}
           </Button>
