@@ -80,6 +80,7 @@ mutao/
 |---|---|---|
 | GET | /api/health | 健康检查 |
 | POST | /api/items | 创建物品（含验证） |
+| POST | /api/items/analyze | AI 标签提取（调用 scalpel） |
 | GET | /api/items | 物品列表 |
 | GET | /api/items/:id | 物品详情 |
 | POST | /api/items/:id/match | 触发匹配 |
