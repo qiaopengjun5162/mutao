@@ -27,8 +27,7 @@ def extract_tags_local(description: str) -> dict:
     desc = description.lower()
     tag_map = {
         "键盘": "机械键盘",
-        "书": "书籍",
-        "小说": "小说",
+        "小说": "书籍",
         "耳机": "耳机",
         "音箱": "音箱",
         "杯子": "杯子",
@@ -36,6 +35,8 @@ def extract_tags_local(description: str) -> dict:
         "背包": "背包",
         "衣服": "衣服",
         "桌子": "家具",
+        "桌": "家具",
+        "椅": "家具",
     }
     found_tags = [tag for kw, tag in tag_map.items() if kw in desc]
     if not found_tags:
