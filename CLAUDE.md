@@ -24,8 +24,8 @@ cargo run
 | 核心引擎 | Rust (axum + tokio) | API 路由、图匹配算法、状态机 |
 | 持久化 | PostgreSQL (sqlx) | 物品、需求、交换环存盘 |
 | AI 手术刀 | Python | 图片/文本 → 标签 + 价值梯度 |
-| Web3 存证 | Solidity | 物品流转履历上链（多链接口设计中） |
-| 前端（规划中） | Next.js + shadcn/ui + WASM | 用户界面 |
+| Web3 存证 | Solidity | 物品流转履历上链（多链接口） |
+| 前端 | Next.js + shadcn/ui | 用户界面（Turbopack） |
 
 ## 项目结构
 
@@ -39,7 +39,8 @@ mutao/
 │   ├── store.rs    # 数据访问层
 │   ├── auth.rs     # JWT 认证 + 中间件
 │   ├── ws.rs       # WebSocket 实时通知
-│   └── error.rs    # 统一错误处理
+│   ├── error.rs    # 统一错误处理
+│   └── blockchain/ # 多链适配器（Ethereum, Solana, Move）
 ├── frontend/
 │   ├── src/
 │   │   ├── app/
@@ -50,10 +51,12 @@ mutao/
 │   │   │   ├── demands/page.tsx   # 交换意向
 │   │   │   └── cycles/page.tsx    # 交换环
 │   │   ├── components/
-│   │   │   ├── nav.tsx            # 导航栏
+│   │   │   ├── nav.tsx            # 导航栏（含 WebSocket 通知指示器）
 │   │   │   └── ui/button.tsx      # 按钮组件
+│   │   ├── hooks/
+│   │   │   └── use-ws.ts          # WebSocket 实时通知 hook
 │   │   └── lib/
-│   │       ├── api.ts             # API 客户端
+│   │       ├── api.ts             # API 客户端（含 WS、AI、Web3）
 │   │       └── utils.ts           # 工具函数
 │   └── package.json
 ├── scalpel/
@@ -63,9 +66,11 @@ mutao/
 │   └── MutaoSwapHistory.sol  # Web3 存证合约
 ├── tests/
 │   ├── matcher_test.rs  # 匹配引擎测试 (5 个)
-│   └── models_test.rs   # 模型层测试 (8 个)
+│   └── models_test.rs   # 模型层测试 (13 个)
 ├── migrations/
-│   └── 001_init.sql     # 数据库建表
+│   ├── 001_init.sql     # 数据库建表
+│   ├── 002_users.sql    # 用户表 + 外键
+│   └── 003_indexes.sql  # 性能索引 + 级联删除
 ├── .github/workflows/
 │   └── ci.yml           # CI/CD 配置
 ├── Justfile             # 自动化命令集
@@ -102,14 +107,16 @@ mutao/
 | / | 首页（导航入口） |
 | /items | 物品列表（卡片布局） |
 | /items/new | 发布物品（表单） |
-| /items/[id] | 物品详情（触发匹配） |
+| /items/[id] | 物品详情（触发匹配、AI 分析、Web3 存证） |
 | /demands | 交换意向列表 |
 | /cycles | 交换环列表（确认交换） |
+| /auth/login | 登录页 |
+| /auth/register | 注册页 |
 
 ## 测试
 
 ```bash
-cargo nextest run             # Rust 测试 (13 个)
+cargo nextest run             # Rust 测试 (18 个)
 cd scalpel && pytest -v       # Python 测试 (10 个)
 just test-all                 # 全部测试
 cargo llvm-cov nextest --html # 覆盖率报告
@@ -155,8 +162,28 @@ just db-schema                # 查看表结构
 - 配置 Justfile 自动化命令集
 - 配置 GitHub Actions CI/CD
 
-### 待办
-- 设计多链合约统一接口（以太坊、Solana、Move 系）
-- 图片上传 + AI 标签提取集成
-- Web3 存证端到端打通
-- 移动端 H5
+### Phase 3 - 移植 rust-template 最佳实践
+- pre-commit hooks、cargo-deny、git-cliff、typos
+- rustfmt.toml、thiserror 错误处理升级
+- CI 增强：taplo + deny + typos + 自动 Release
+
+### Phase 4 - 前端页面 + 用户认证
+- Next.js + shadcn/ui 前端（9 个路由）
+- JWT 认证（注册/登录）
+- API 客户端封装
+
+### Phase 5 - WebSocket + 代码优化 + 全链路打通
+- JWT_SECRET 环境变量化（OnceLock）
+- WebSocket 实时通知（tokio::sync::broadcast）
+- 数据库性能索引（GIN + 复合索引）+ 外键级联删除
+- AI 标签提取（POST /api/items/analyze，调用 scalpel.py）
+- Web3 存证端到端（ChainManager + 多链适配器）
+- 移动端 H5 响应式适配（导航汉堡菜单）
+- 前端对接 WebSocket + AI + Web3
+- README 中英文
+
+### 当前状态（2026-05-28）
+- Rust 测试：18 个全部通过
+- Python 测试：10 个全部通过
+- 前端路由：9 个
+- 所有 P0/P1/P2 功能已完成

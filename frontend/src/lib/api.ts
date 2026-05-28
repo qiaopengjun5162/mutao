@@ -120,4 +120,35 @@ export const api = {
       { method: "POST" }
     ),
   health: () => request<{ status: string; name: string }>("/api/health"),
+
+  // AI 标签提取
+  analyzeItem: (text: string) =>
+    request<{ tags: string[]; value_tier: number; method: string }>(
+      "/api/items/analyze",
+      { method: "POST", body: JSON.stringify({ text }) }
+    ),
+
+  // Web3 存证
+  attestItem: (id: string, chain?: string) =>
+    request<{ item_id: string; chain: string; tx_hash: string }>(
+      `/api/items/${id}/attest`,
+      { method: "POST", body: JSON.stringify({ chain: chain || "ethereum" }) }
+    ),
+  itemHistory: (id: string, chain?: string) =>
+    request<{ item_id: string; chain: string; records: unknown[] }>(
+      `/api/items/${id}/history?chain=${chain || "ethereum"}`
+    ),
 };
+
+// WebSocket 实时通知连接
+export function connectWs(onMessage: (event: string, data: unknown) => void): () => void {
+  const wsBase = API_BASE.replace(/^http/, "ws");
+  const ws = new WebSocket(`${wsBase}/api/ws`);
+  ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      onMessage(msg.event, msg.data);
+    } catch { /* 忽略非 JSON 消息 */ }
+  };
+  return () => ws.close();
+}

@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { api, type Item, type SwapCycle } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { useWs } from "@/hooks/use-ws";
 
 const statusLabel: Record<string, string> = {
   Idle: "空闲",
@@ -21,7 +22,12 @@ export default function ItemDetailPage({
   const [cycles, setCycles] = useState<SwapCycle[]>([]);
   const [loading, setLoading] = useState(true);
   const [matching, setMatching] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [attesting, setAttesting] = useState(false);
   const [error, setError] = useState("");
+  const [aiResult, setAiResult] = useState<{ tags: string[]; value_tier: number; method: string } | null>(null);
+  const [attestResult, setAttestResult] = useState<{ tx_hash: string; chain: string } | null>(null);
+  const { notifications } = useWs();
 
   useEffect(() => {
     api
@@ -44,6 +50,36 @@ export default function ItemDetailPage({
       setError(e instanceof Error ? e.message : "匹配失败");
     } finally {
       setMatching(false);
+    }
+  };
+
+  // AI 标签提取：调用 scalpel.py 后端
+  const handleAnalyze = async () => {
+    if (!item) return;
+    setAnalyzing(true);
+    setError("");
+    try {
+      const result = await api.analyzeItem(item.title + " " + (item.description || ""));
+      setAiResult(result);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "AI 分析失败");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  // Web3 存证：物品流转履历上链
+  const handleAttest = async () => {
+    if (!item) return;
+    setAttesting(true);
+    setError("");
+    try {
+      const result = await api.attestItem(item.id);
+      setAttestResult(result);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "存证失败");
+    } finally {
+      setAttesting(false);
     }
   };
 
@@ -95,10 +131,49 @@ export default function ItemDetailPage({
           </div>
         </div>
 
-        {item.status === "Idle" && (
-          <Button onClick={handleMatch} disabled={matching} className="w-full">
-            {matching ? "匹配中..." : "触发匹配"}
+        {/* 操作按钮组 */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          {item.status === "Idle" && (
+            <Button onClick={handleMatch} disabled={matching} className="flex-1">
+              {matching ? "匹配中..." : "触发匹配"}
+            </Button>
+          )}
+          <Button onClick={handleAnalyze} disabled={analyzing} variant="outline" className="flex-1">
+            {analyzing ? "AI 分析中..." : "AI 标签提取"}
           </Button>
+          <Button onClick={handleAttest} disabled={attesting} variant="outline" className="flex-1">
+            {attesting ? "存证中..." : "Web3 存证"}
+          </Button>
+        </div>
+
+        {/* AI 分析结果 */}
+        {aiResult && (
+          <div className="mt-4 p-3 rounded-md bg-secondary/50 text-sm">
+            <p className="font-medium mb-1">AI 分析结果（{aiResult.method}）</p>
+            <p>标签：{aiResult.tags.join(", ")}</p>
+            <p>价值等级：{aiResult.value_tier}/5</p>
+          </div>
+        )}
+
+        {/* Web3 存证结果 */}
+        {attestResult && (
+          <div className="mt-4 p-3 rounded-md bg-secondary/50 text-sm">
+            <p className="font-medium mb-1">存证成功</p>
+            <p>链：{attestResult.chain}</p>
+            <p>交易哈希：<code className="text-xs break-all">{attestResult.tx_hash}</code></p>
+          </div>
+        )}
+
+        {/* 实时通知 */}
+        {notifications.length > 0 && (
+          <div className="mt-4 space-y-1">
+            <p className="text-xs font-medium text-muted-foreground">实时通知</p>
+            {notifications.slice(0, 5).map((n, i) => (
+              <div key={i} className="text-xs text-muted-foreground">
+                <span className="font-mono">{n.event}</span>: {JSON.stringify(n.data)}
+              </div>
+            ))}
+          </div>
         )}
       </div>
 

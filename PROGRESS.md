@@ -216,6 +216,12 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 | AI 标签提取 | ✅ | POST /api/items/analyze，调用 scalpel.py |
 | Web3 存证 | ✅ | POST /api/items/:id/attest + GET /api/items/:id/history |
 | ChainManager | ✅ | get_history 方法，多链适配器注册 |
+| 移动端 H5 适配 | ✅ | 导航汉堡菜单 + 响应式布局 |
+| 前端 WebSocket 对接 | ✅ | useWs hook + 通知指示器 |
+| 前端 AI 标签提取 | ✅ | 物品详情页 AI 分析按钮 |
+| 前端 Web3 存证 | ✅ | 物品详情页存证按钮 + 结果展示 |
+| README 中英文 | ✅ | README.md + README_en.md |
+| rust-dev-workflow skill | ✅ | 更新文档维护清单含 README |
 
 ---
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useWs } from "@/hooks/use-ws";
 
 const navLinks = [
   { href: "/items", label: "物品" },
@@ -12,6 +13,8 @@ const navLinks = [
 
 export function Nav() {
   const [open, setOpen] = useState(false);
+  const { notifications, connected } = useWs();
+  const unread = notifications.length;
 
   return (
     <nav className="border-b bg-background">
@@ -19,6 +22,16 @@ export function Nav() {
         <Link href="/" className="text-lg font-bold">
           木桃 Mutao
         </Link>
+
+        {/* WebSocket 连接状态 + 通知计数 */}
+        <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground">
+          <span className={`inline-block w-2 h-2 rounded-full ${connected ? "bg-green-500" : "bg-gray-400"}`} />
+          {unread > 0 && (
+            <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px]">
+              {unread}
+            </span>
+          )}
+        </div>
 
         {/* 桌面端导航 */}
         <div className="hidden md:flex items-center gap-2">
