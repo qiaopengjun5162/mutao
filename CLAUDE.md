@@ -51,6 +51,7 @@ mutao/
 │   │   ├── cycles.rs   # 匹配 + 交换环确认
 │   │   ├── auth_handler.rs # 注册/登录
 │   │   ├── ai.rs       # AI 标签提取
+│   │   ├── upload.rs   # 图片上传
 │   │   └── blockchain_handler.rs # Web3 存证
 │   ├── models.rs       # 领域模型：Item, Demand, SwapCycle, SwapLeg
 │   ├── matcher.rs      # 图匹配引擎：DFS 多节点交换环发现
@@ -107,6 +108,7 @@ mutao/
 |---|---|---|
 | GET | /api/health | 健康检查 |
 | POST | /api/items | 创建物品（含验证） |
+| POST | /api/items/:id/image | 图片上传（multipart，5MB 限制） |
 | POST | /api/items/analyze | AI 标签提取（调用 scalpel） |
 | GET | /api/items | 物品列表 |
 | GET | /api/items/:id | 物品详情 |

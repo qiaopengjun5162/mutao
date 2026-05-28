@@ -253,6 +253,24 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 
 ---
 
+### 2026-05-28 Phase 10 - 图片上传
+
+| 任务 | 状态 | 说明 |
+|------|------|------|
+| 图片上传端点 | ✅ | POST /api/items/:id/image，multipart 上传 |
+| 文件验证 | ✅ | 类型检查（jpeg/png/gif/webp）+ 大小限制（5MB） |
+| 本地存储 | ✅ | uploads/ 目录，UUID 文件名 |
+| 静态文件服务 | ✅ | /uploads/ 路径通过 ServeDir 提供 |
+| Store 方法 | ✅ | update_item_image 更新 image_url |
+
+### 2026-05-28 Phase 9 - OpenAPI 文档
+
+| 任务 | 状态 | 说明 |
+|------|------|------|
+| utoipa 集成 | ✅ | OpenAPI spec 自动生成 |
+| Swagger UI | ✅ | /swagger-ui 访问 |
+| ToSchema derives | ✅ | 所有 model 和 request type |
+
 ### 2026-05-28 Phase 8 - Docker 部署
 
 | 任务 | 状态 | 说明 |
