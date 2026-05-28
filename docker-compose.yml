@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mutao
+      POSTGRES_PASSWORD: mutao
+      POSTGRES_DB: mutao
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mutao"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://mutao:mutao@db:5432/mutao
+      JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
+      ETH_RPC_URL: ${ETH_RPC_URL:-}
+      ETH_CONTRACT_ADDRESS: ${ETH_CONTRACT_ADDRESS:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  scalpel:
+    build:
+      context: .
+      dockerfile: Dockerfile.scalpel
+    ports:
+      - "8000:8000"
+    environment:
+      MUTAO_LLM_KEY: ${MUTAO_LLM_KEY:-}
+      MUTAO_LLM_ENDPOINT: ${MUTAO_LLM_ENDPOINT:-}
+
+volumes:
+  pgdata:

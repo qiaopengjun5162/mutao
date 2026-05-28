@@ -253,6 +253,17 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 
 ---
 
+### 2026-05-28 Phase 8 - Docker 部署
+
+| 任务 | 状态 | 说明 |
+|------|------|------|
+| Dockerfile | ✅ | Rust 后端多阶段构建（builder + slim runtime） |
+| Dockerfile.scalpel | ✅ | Python 手术刀镜像 |
+| docker-compose.yml | ✅ | 后端 + PostgreSQL + Scalpel 一键编排 |
+| .dockerignore | ✅ | 排除 target/node_modules/.git 等 |
+| .env.example | ✅ | 环境变量模板 |
+| Justfile docker 命令 | ✅ | docker-up/down/logs |
+
 ### 2026-05-28 Phase 7 - 集成测试补强
 
 | 任务 | 状态 | 说明 |

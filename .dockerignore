@@ -1,0 +1,11 @@
+target/
+frontend/node_modules/
+frontend/.next/
+.git/
+.claude/
+.trellis/
+*.md
+!README.md
+.env
+.env.*
+!.env.example

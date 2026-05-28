@@ -94,6 +94,20 @@ run:
 dev:
     cargo watch -x run
 
+# ---- Docker ----
+
+# Docker 构建并启动所有服务
+docker-up:
+    docker-compose up --build -d
+
+# Docker 停止所有服务
+docker-down:
+    docker-compose down
+
+# Docker 查看日志
+docker-logs:
+    docker-compose logs -f
+
 # ---- 清理 ----
 
 # 清理构建产物

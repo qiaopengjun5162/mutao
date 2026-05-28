@@ -17,6 +17,16 @@ cargo run
 # API 在 http://localhost:3000
 ```
 
+### Docker 一键启动
+
+```bash
+cp .env.example .env  # 编辑 JWT_SECRET 等
+just docker-up        # 或 docker-compose up --build -d
+# API: http://localhost:3000
+# Scalpel: http://localhost:8000
+# PostgreSQL: localhost:5432
+```
+
 ## 技术栈
 
 | 层 | 技术 | 职责 |
@@ -82,6 +92,9 @@ mutao/
 │   └── 003_indexes.sql  # 性能索引 + 级联删除
 ├── .github/workflows/
 │   └── ci.yml           # CI/CD 配置
+├── Dockerfile           # Rust 后端镜像（多阶段构建）
+├── Dockerfile.scalpel   # Python 手术刀镜像
+├── docker-compose.yml   # 一键启动：后端 + DB + 手术刀
 ├── Justfile             # 自动化命令集
 ├── PROGRESS.md          # 项目进度记录
 ├── .env                 # 环境变量
