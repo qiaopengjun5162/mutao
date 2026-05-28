@@ -153,6 +153,7 @@ test_returns_dict_structure ✅
 - [ ] 移动端 H5
 - [x] 性能优化（索引、缓存）
 - [x] 图片上传 + AI 标签提取集成
+- [x] Web3 存证端到端打通
 
 ---
 
@@ -213,6 +214,8 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 | 数据库索引 | ✅ | GIN 索引 + 复合索引，覆盖所有查询路径 |
 | 外键约束 | ✅ | demands/items → users 级联删除 |
 | AI 标签提取 | ✅ | POST /api/items/analyze，调用 scalpel.py |
+| Web3 存证 | ✅ | POST /api/items/:id/attest + GET /api/items/:id/history |
+| ChainManager | ✅ | get_history 方法，多链适配器注册 |
 
 ---
 

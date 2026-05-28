@@ -10,4 +10,5 @@ pub mod ws;
 pub struct AppState {
     pub store: store::Store,
     pub ws_hub: ws::WsHub,
+    pub chain_manager: blockchain::ChainManager,
 }

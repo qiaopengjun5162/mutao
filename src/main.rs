@@ -10,6 +10,8 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use mutao::auth;
+use mutao::blockchain::{ChainManager, ChainType, SwapProof};
+use mutao::blockchain::ethereum::{EthereumAdapter, EthereumConfig};
 use mutao::error::AppError;
 use mutao::matcher;
 use mutao::models::{Demand, Item, ItemStatus, SwapCycle, User};
@@ -34,9 +36,23 @@ async fn main() {
 
     tracing::info!("数据库连接成功");
 
+    // 初始化多链管理器（默认注册以太坊适配器）
+    let mut chain_manager = ChainManager::new();
+    let eth_rpc = std::env::var("ETH_RPC_URL").unwrap_or_default();
+    let eth_contract = std::env::var("ETH_CONTRACT_ADDRESS").unwrap_or_default();
+    if !eth_rpc.is_empty() && !eth_contract.is_empty() {
+        chain_manager.register(Box::new(EthereumAdapter::new(EthereumConfig {
+            rpc_url: eth_rpc,
+            contract_address: eth_contract,
+            chain_id: 1,
+        })));
+        tracing::info!("以太坊存证已启用");
+    }
+
     let state = Arc::new(mutao::AppState {
         store: Store::new(pool),
         ws_hub: WsHub::new(),
+        chain_manager,
     });
 
     let app = Router::new()
@@ -47,6 +63,8 @@ async fn main() {
         .route("/api/items/:id", get(get_item))
         .route("/api/items/:id/match", post(match_item))
         .route("/api/items/:id/status", axum::routing::patch(update_item_status))
+        .route("/api/items/:id/attest", post(attest_item))
+        .route("/api/items/:id/history", get(item_history))
         .route("/api/cycles/:id/confirm", post(confirm_swap))
         .route("/api/demands", post(create_demand).get(list_demands))
         .route("/api/cycles", get(list_cycles))
@@ -400,4 +418,74 @@ async fn analyze_item(
         value_tier: result["value_tier"].as_u64().unwrap_or(1) as u8,
         method: result["method"].as_str().unwrap_or("unknown").to_string(),
     }))
+}
+
+// ---- Web3 存证 ----
+
+#[derive(Deserialize)]
+struct AttestReq {
+    from_user: String,
+    to_user: String,
+    item_name: String,
+    message: Option<String>,
+}
+
+/// 将交换记录存证到区块链（默认以太坊）
+async fn attest_item(
+    State(s): State<SharedState>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    Json(req): Json<AttestReq>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let item = s
+        .store
+        .get_item(id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    let proof = SwapProof {
+        item_id: id.to_string(),
+        from_user: req.from_user,
+        to_user: req.to_user,
+        item_name: req.item_name,
+        message: req.message.unwrap_or_default(),
+        swap_count: 0,
+    };
+
+    // 优先以太坊，无配置时返回提示
+    let record = s
+        .chain_manager
+        .record_swap(&ChainType::Ethereum, &proof)
+        .await
+        .map_err(|e| AppError::InternalMsg(format!("链上存证失败: {e}")))?;
+
+    tracing::info!("物品 {} 存证成功, tx={}", item.title, record.tx_hash);
+
+    Ok(Json(serde_json::json!({
+        "item_id": id,
+        "chain": record.chain,
+        "tx_hash": record.tx_hash,
+        "status": record.status,
+    })))
+}
+
+/// 查询物品的链上存证历史
+async fn item_history(
+    State(s): State<SharedState>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    if !s.store.item_exists(id).await? {
+        return Err(AppError::NotFound);
+    }
+
+    let history = s
+        .chain_manager
+        .get_history(&ChainType::Ethereum, &id.to_string())
+        .await
+        .map_err(|e| AppError::InternalMsg(format!("查询链上历史失败: {e}")))?;
+
+    Ok(Json(serde_json::json!({
+        "item_id": id,
+        "chain": "Ethereum",
+        "records": history,
+    })))
 }

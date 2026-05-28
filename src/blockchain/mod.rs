@@ -111,6 +111,18 @@ impl ChainManager {
         adapter.record_swap(proof).await
     }
 
+    /// 查询指定链上的物品存证历史
+    pub async fn get_history(
+        &self,
+        chain: &ChainType,
+        item_id: &str,
+    ) -> Result<Vec<ChainRecord>, BlockchainError> {
+        let adapter = self
+            .get_adapter(chain)
+            .ok_or_else(|| BlockchainError::UnsupportedChain(format!("{chain:?}")))?;
+        adapter.get_history(item_id).await
+    }
+
     /// 在所有已注册链上存证（多链备份）
     pub async fn record_swap_all(
         &self,

@@ -84,6 +84,8 @@ mutao/
 | GET | /api/items | 物品列表 |
 | GET | /api/items/:id | 物品详情 |
 | POST | /api/items/:id/match | 触发匹配 |
+| POST | /api/items/:id/attest | Web3 存证上链 |
+| GET | /api/items/:id/history | 查询链上存证历史 |
 | PATCH | /api/items/:id/status | 更新物品状态 |
 | POST | /api/demands | 创建交换意向（含验证） |
 | GET | /api/demands | 意向列表 |
