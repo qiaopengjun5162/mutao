@@ -16,7 +16,9 @@ import os
 import sys
 
 LLM_API_KEY = os.environ.get("MUTAO_LLM_KEY", "")
-LLM_ENDPOINT = os.environ.get("MUTAO_LLM_ENDPOINT", "https://api.openai.com/v1/chat/completions")
+LLM_ENDPOINT = os.environ.get(
+    "MUTAO_LLM_ENDPOINT", "https://api.openai.com/v1/chat/completions"
+)
 LLM_MODEL = os.environ.get("MUTAO_LLM_MODEL", "gpt-4o-mini")
 
 
@@ -68,12 +70,14 @@ def extract_tags_llm(description: str, image_path: str = "") -> dict:
         {"role": "user", "content": f"物品描述：{description}"},
     ]
 
-    body = json.dumps({
-        "model": LLM_MODEL,
-        "messages": messages,
-        "temperature": 0.1,
-        "max_tokens": 256,
-    }).encode()
+    body = json.dumps(
+        {
+            "model": LLM_MODEL,
+            "messages": messages,
+            "temperature": 0.1,
+            "max_tokens": 256,
+        }
+    ).encode()
 
     req = urllib.request.Request(
         LLM_ENDPOINT,
@@ -90,7 +94,11 @@ def extract_tags_llm(description: str, image_path: str = "") -> dict:
             result = json.loads(resp.read())
             content = result["choices"][0]["message"]["content"]
             parsed = json.loads(content)
-            return {"tags": parsed.get("tags", ["其他"]), "value_tier": parsed.get("value_tier", 1), "method": "llm"}
+            return {
+                "tags": parsed.get("tags", ["其他"]),
+                "value_tier": parsed.get("value_tier", 1),
+                "method": "llm",
+            }
     except Exception as e:
         print(f"LLM 调用失败，降级到规则引擎: {e}", file=sys.stderr)
         return extract_tags_local(description)

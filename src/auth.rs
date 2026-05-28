@@ -1,10 +1,10 @@
 use axum::{
     extract::Request,
-    http::{header, StatusCode},
+    http::{StatusCode, header},
     middleware::Next,
     response::Response,
 };
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -71,10 +71,7 @@ pub fn verify_token(token: &str) -> Result<Claims, StatusCode> {
 }
 
 pub async fn auth_middleware(mut req: Request, next: Next) -> Result<Response, StatusCode> {
-    let auth_header = req
-        .headers()
-        .get(header::AUTHORIZATION)
-        .and_then(|v| v.to_str().ok());
+    let auth_header = req.headers().get(header::AUTHORIZATION).and_then(|v| v.to_str().ok());
 
     let token = auth_header
         .and_then(|v| v.strip_prefix("Bearer "))

@@ -82,7 +82,9 @@ pub struct ChainManager {
 
 impl ChainManager {
     pub fn new() -> Self {
-        Self { adapters: Vec::new() }
+        Self {
+            adapters: Vec::new(),
+        }
     }
 
     pub fn register(&mut self, adapter: Box<dyn ChainAdapter>) {
@@ -90,10 +92,7 @@ impl ChainManager {
     }
 
     pub fn get_adapter(&self, chain: &ChainType) -> Option<&dyn ChainAdapter> {
-        self.adapters
-            .iter()
-            .find(|a| a.chain_type() == *chain)
-            .map(|a| a.as_ref())
+        self.adapters.iter().find(|a| a.chain_type() == *chain).map(|a| a.as_ref())
     }
 
     pub fn supported_chains(&self) -> Vec<ChainType> {

@@ -5,8 +5,8 @@ use uuid::Uuid;
 fn demand(user: u8, item: u8, offer: Vec<&str>, want: Vec<&str>) -> Demand {
     Demand {
         id: Uuid::new_v4(),
-        user_id: Uuid::from_bytes([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,user]),
-        offer_item_id: Uuid::from_bytes([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,item]),
+        user_id: Uuid::from_bytes([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, user]),
+        offer_item_id: Uuid::from_bytes([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, item]),
         offer_tags: offer.into_iter().map(String::from).collect(),
         target_tags: want.into_iter().map(String::from).collect(),
         created_at: chrono::Utc::now(),

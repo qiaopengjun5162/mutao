@@ -33,7 +33,13 @@ impl Matcher {
 
         for start in 0..demands.len() {
             Self::dfs(
-                start, start, &adjacency, demands, &mut visited, &mut path, &mut cycles,
+                start,
+                start,
+                &adjacency,
+                demands,
+                &mut visited,
+                &mut path,
+                &mut cycles,
                 max_cycle_len,
             );
         }
@@ -106,11 +112,7 @@ impl Matcher {
             swaps,
             created_at: chrono::Utc::now(),
         };
-        if cycle.is_valid() {
-            Some(cycle)
-        } else {
-            None
-        }
+        if cycle.is_valid() { Some(cycle) } else { None }
     }
 
     fn tags_overlap(a: &[String], b: &[String]) -> bool {
@@ -127,11 +129,8 @@ impl Matcher {
             .collect();
         cand.sort();
         cycles.iter().any(|c| {
-            let mut exist: Vec<(Uuid, Uuid)> = c
-                .swaps
-                .iter()
-                .map(|leg| (leg.offer_item_id, leg.want_item_id))
-                .collect();
+            let mut exist: Vec<(Uuid, Uuid)> =
+                c.swaps.iter().map(|leg| (leg.offer_item_id, leg.want_item_id)).collect();
             exist.sort();
             cand == exist
         })

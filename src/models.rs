@@ -55,8 +55,8 @@ pub struct Demand {
     pub id: Uuid,
     pub user_id: Uuid,
     pub offer_item_id: Uuid,
-    pub offer_tags: Vec<String>,     // 我的物品的标签（匹配给别人用）
-    pub target_tags: Vec<String>,    // 我想要换到的物品标签
+    pub offer_tags: Vec<String>,  // 我的物品的标签（匹配给别人用）
+    pub target_tags: Vec<String>, // 我想要换到的物品标签
     pub created_at: DateTime<Utc>,
 }
 

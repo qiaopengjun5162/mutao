@@ -15,10 +15,7 @@ fn make_swap_leg(from: u8, to: u8, offer: u8, want: u8) -> SwapLeg {
 fn test_swap_cycle_valid_two_person() {
     let cycle = SwapCycle {
         id: Uuid::new_v4(),
-        swaps: vec![
-            make_swap_leg(1, 2, 101, 102),
-            make_swap_leg(2, 1, 102, 101),
-        ],
+        swaps: vec![make_swap_leg(1, 2, 101, 102), make_swap_leg(2, 1, 102, 101)],
         created_at: Utc::now(),
     };
     assert!(cycle.is_valid());
@@ -62,10 +59,7 @@ fn test_swap_cycle_invalid_empty() {
 fn test_swap_cycle_invalid_broken_chain() {
     let cycle = SwapCycle {
         id: Uuid::new_v4(),
-        swaps: vec![
-            make_swap_leg(1, 2, 101, 102),
-            make_swap_leg(3, 1, 103, 101),
-        ],
+        swaps: vec![make_swap_leg(1, 2, 101, 102), make_swap_leg(3, 1, 103, 101)],
         created_at: Utc::now(),
     };
     assert!(!cycle.is_valid());
@@ -127,14 +121,14 @@ fn test_demand_serialization_roundtrip() {
 fn test_item_status_transitions() {
     assert!(ItemStatus::Idle.can_transition_to(&ItemStatus::Matching));
     assert!(!ItemStatus::Idle.can_transition_to(&ItemStatus::Completed));
-    
+
     assert!(ItemStatus::Matching.can_transition_to(&ItemStatus::Completed));
     assert!(ItemStatus::Matching.can_transition_to(&ItemStatus::Idle));
     assert!(!ItemStatus::Matching.can_transition_to(&ItemStatus::Matching));
-    
+
     assert!(ItemStatus::Completed.can_transition_to(&ItemStatus::Archived));
     assert!(!ItemStatus::Completed.can_transition_to(&ItemStatus::Idle));
-    
+
     assert!(ItemStatus::Archived.available_transitions().is_empty());
 }
 
@@ -142,7 +136,7 @@ fn test_item_status_transitions() {
 fn test_available_transitions() {
     let idle_transitions = ItemStatus::Idle.available_transitions();
     assert_eq!(idle_transitions, vec![ItemStatus::Matching]);
-    
+
     let matching_transitions = ItemStatus::Matching.available_transitions();
     assert!(matching_transitions.contains(&ItemStatus::Completed));
     assert!(matching_transitions.contains(&ItemStatus::Idle));

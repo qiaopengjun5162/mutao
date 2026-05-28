@@ -80,9 +80,7 @@ impl Store {
     }
 
     pub async fn save_cycle(&self, cycle: &SwapCycle) -> Result<(), sqlx::Error> {
-        let data = serde_json::to_value(cycle).map_err(|e| {
-            sqlx::Error::decode(e)
-        })?;
+        let data = serde_json::to_value(cycle).map_err(|e| sqlx::Error::decode(e))?;
         sqlx::query("INSERT INTO swap_cycles (id, data, created_at) VALUES ($1, $2, $3)")
             .bind(cycle.id)
             .bind(&data)
@@ -118,12 +116,11 @@ impl Store {
     }
 
     pub async fn item_exists(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let exists = sqlx::query_scalar::<_, bool>(
-            "SELECT EXISTS(SELECT 1 FROM items WHERE id = $1)",
-        )
-        .bind(id)
-        .fetch_one(&self.pool)
-        .await?;
+        let exists =
+            sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM items WHERE id = $1)")
+                .bind(id)
+                .fetch_one(&self.pool)
+                .await?;
         Ok(exists)
     }
 

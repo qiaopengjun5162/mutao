@@ -1,8 +1,8 @@
 use axum::{
+    Router,
     extract::State,
     response::Json,
     routing::{get, post},
-    Router,
 };
 use serde::Deserialize;
 use sqlx::postgres::PgPoolOptions;
@@ -10,8 +10,8 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use mutao::auth;
-use mutao::blockchain::{ChainManager, ChainType, SwapProof};
 use mutao::blockchain::ethereum::{EthereumAdapter, EthereumConfig};
+use mutao::blockchain::{ChainManager, ChainType, SwapProof};
 use mutao::error::AppError;
 use mutao::matcher;
 use mutao::models::{Demand, Item, ItemStatus, SwapCycle, User};
@@ -62,7 +62,10 @@ async fn main() {
         .route("/api/items/analyze", post(analyze_item))
         .route("/api/items/:id", get(get_item))
         .route("/api/items/:id/match", post(match_item))
-        .route("/api/items/:id/status", axum::routing::patch(update_item_status))
+        .route(
+            "/api/items/:id/status",
+            axum::routing::patch(update_item_status),
+        )
         .route("/api/items/:id/attest", post(attest_item))
         .route("/api/items/:id/history", get(item_history))
         .route("/api/cycles/:id/confirm", post(confirm_swap))
@@ -129,11 +132,7 @@ async fn get_item(
     State(s): State<SharedState>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> Result<Json<Item>, AppError> {
-    s.store
-        .get_item(id)
-        .await?
-        .map(Json)
-        .ok_or(AppError::NotFound)
+    s.store.get_item(id).await?.map(Json).ok_or(AppError::NotFound)
 }
 
 async fn list_items(State(s): State<SharedState>) -> Result<Json<Vec<Item>>, AppError> {
@@ -224,17 +223,11 @@ async fn confirm_swap(
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, AppError> {
     let cycles = s.store.list_cycles().await?;
-    let cycle = cycles
-        .iter()
-        .find(|c| c.id == id)
-        .ok_or(AppError::NotFound)?;
+    let cycle = cycles.iter().find(|c| c.id == id).ok_or(AppError::NotFound)?;
 
     // 将交换环中所有物品标记为 Completed
     for leg in &cycle.swaps {
-        s.store
-            .update_item_status(leg.offer_item_id, &ItemStatus::Completed)
-            .await
-            .ok();
+        s.store.update_item_status(leg.offer_item_id, &ItemStatus::Completed).await.ok();
     }
 
     tracing::info!("交换环 {} 已确认，{} 个物品完成交换", id, cycle.swaps.len());
@@ -265,11 +258,7 @@ async fn update_item_status(
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Json(req): Json<UpdateStatusReq>,
 ) -> Result<Json<Item>, AppError> {
-    let item = s
-        .store
-        .get_item(id)
-        .await?
-        .ok_or(AppError::NotFound)?;
+    let item = s.store.get_item(id).await?.ok_or(AppError::NotFound)?;
 
     if !item.status.can_transition_to(&req.status) {
         return Err(AppError::BadRequest(format!(
@@ -385,9 +374,7 @@ struct AnalyzeRes {
 }
 
 /// 调用 Python scalpel 手术刀，从描述文本中提取标签和价值梯度
-async fn analyze_item(
-    Json(req): Json<AnalyzeReq>,
-) -> Result<Json<AnalyzeRes>, AppError> {
+async fn analyze_item(Json(req): Json<AnalyzeReq>) -> Result<Json<AnalyzeRes>, AppError> {
     if req.description.trim().is_empty() {
         return Err(AppError::BadRequest("description 不能为空".into()));
     }
@@ -436,11 +423,7 @@ async fn attest_item(
     axum::extract::Path(id): axum::extract::Path<Uuid>,
     Json(req): Json<AttestReq>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    let item = s
-        .store
-        .get_item(id)
-        .await?
-        .ok_or(AppError::NotFound)?;
+    let item = s.store.get_item(id).await?.ok_or(AppError::NotFound)?;
 
     let proof = SwapProof {
         item_id: id.to_string(),
