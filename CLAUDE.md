@@ -32,15 +32,23 @@ cargo run
 ```
 mutao/
 ├── src/
-│   ├── main.rs     # axum 路由 + 处理器
-│   ├── lib.rs      # 库入口
-│   ├── models.rs   # 领域模型：Item, Demand, SwapCycle, SwapLeg
-│   ├── matcher.rs  # 图匹配引擎：DFS 多节点交换环发现
-│   ├── store.rs    # 数据访问层
-│   ├── auth.rs     # JWT 认证 + 中间件
-│   ├── ws.rs       # WebSocket 实时通知
-│   ├── error.rs    # 统一错误处理
-│   └── blockchain/ # 多链适配器（Ethereum, Solana, Move）
+│   ├── main.rs         # 启动入口 + 路由注册（~70 行）
+│   ├── lib.rs          # 库入口 + AppState
+│   ├── handlers/       # 请求处理器（按领域拆分）
+│   │   ├── mod.rs      # SharedState 类型定义
+│   │   ├── items.rs    # 物品 CRUD + 健康检查
+│   │   ├── demands.rs  # 交换意向
+│   │   ├── cycles.rs   # 匹配 + 交换环确认
+│   │   ├── auth_handler.rs # 注册/登录
+│   │   ├── ai.rs       # AI 标签提取
+│   │   └── blockchain_handler.rs # Web3 存证
+│   ├── models.rs       # 领域模型：Item, Demand, SwapCycle, SwapLeg
+│   ├── matcher.rs      # 图匹配引擎：DFS 多节点交换环发现
+│   ├── store.rs        # 数据访问层
+│   ├── auth.rs         # JWT 认证 + 中间件
+│   ├── ws.rs           # WebSocket 实时通知
+│   ├── error.rs        # 统一错误处理
+│   └── blockchain/     # 多链适配器（Ethereum, Solana, Move）
 ├── frontend/
 │   ├── src/
 │   │   ├── app/
@@ -67,6 +75,7 @@ mutao/
 ├── tests/
 │   ├── matcher_test.rs  # 匹配引擎测试 (5 个)
 │   └── models_test.rs   # 模型层测试 (13 个)
+│                        # 内联测试: auth(3) + ws(5) + store(5) = 13
 ├── migrations/
 │   ├── 001_init.sql     # 数据库建表
 │   ├── 002_users.sql    # 用户表 + 外键
@@ -182,8 +191,15 @@ just db-schema                # 查看表结构
 - 前端对接 WebSocket + AI + Web3
 - README 中英文
 
+### Phase 6 - 代码质量提升（2026-05-28）
+- 修复 cargo deny check：许可证允许 ISC/BSD-3-Clause，安全审计例外
+- 模块化 main.rs：拆分为 6 个 handler 子模块（items/demands/cycles/auth/ai/blockchain）
+- 补充测试：ws.rs(5) + store.rs(5) = 10 个新测试
+- 消除 unwrap()：main.rs 改为 `async fn main() -> Result<(), Box<dyn Error>>`
+- taplo 格式化修复
+
 ### 当前状态（2026-05-28）
-- Rust 测试：18 个全部通过
+- Rust 测试：28 个全部通过
 - Python 测试：10 个全部通过
 - 前端路由：9 个
 - 所有 P0/P1/P2 功能已完成

@@ -198,6 +198,17 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 
 ---
 
+### 2026-05-28 Phase 6 - 代码质量提升
+
+| 任务 | 状态 | 说明 |
+|------|------|------|
+| cargo deny 修复 | ✅ | 许可证允许 ISC/BSD-3-Clause，安全审计例外 |
+| main.rs 模块化 | ✅ | 拆分为 6 个 handler 子模块，main.rs 从 474 行缩减到 ~70 行 |
+| ws.rs 测试 | ✅ | 5 个内联测试（广播、多订阅者等） |
+| store.rs 测试 | ✅ | 5 个内联测试（Row 转换、状态变体） |
+| 消除 unwrap() | ✅ | main.rs 改为 `async fn main() -> Result<(), Box<dyn Error>>` |
+| taplo 格式化 | ✅ | Cargo.toml、deny.toml 格式修复 |
+
 ### 2026-05-28 Phase 5 - WebSocket + 代码优化
 
 | 任务 | 状态 | 说明 |

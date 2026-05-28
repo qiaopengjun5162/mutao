@@ -9,7 +9,7 @@ use mutao::store::Store;
 use mutao::ws::WsHub;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt::init();
     dotenvy::dotenv().ok();
 
@@ -76,6 +76,7 @@ async fn main() {
 
     let addr = "0.0.0.0:3000";
     tracing::info!("木桃 Mutao 运行在 http://{addr}");
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(listener, app).await?;
+    Ok(())
 }
