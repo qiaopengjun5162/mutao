@@ -1,5 +1,10 @@
 # 木桃 Mutao
 
+[![CI](https://github.com/qiaopengjun5162/mutao/actions/workflows/ci.yml/badge.svg)](https://github.com/qiaopengjun5162/mutao/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/Rust-1.87+-orange.svg)](https://www.rust-lang.org/)
+[![Tests](https://img.shields.io/badge/Tests-62-green.svg)](#测试)
+
 > "投我以木桃，报之以琼瑶。" ——《诗经》
 
 AI 撮合 + Web3 溯源的免现金实体易物平台，面向数字游民与青年社区。

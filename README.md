@@ -1,5 +1,10 @@
 # Mutao (木桃)
 
+[![CI](https://github.com/qiaopengjun5162/mutao/actions/workflows/ci.yml/badge.svg)](https://github.com/qiaopengjun5162/mutao/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/Rust-1.87+-orange.svg)](https://www.rust-lang.org/)
+[![Tests](https://img.shields.io/badge/Tests-62-green.svg)](#testing)
+
 > "Throw me a peach, I'll repay you with a jade." — *The Book of Songs*
 
 A cash-free barter platform with AI matching and Web3 provenance, built for digital nomads and youth communities.
