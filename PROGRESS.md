@@ -47,14 +47,29 @@ AI 撮合 + Web3 溯源的免现金实体易物平台，面向数字游民与青
 
 ## 三、测试覆盖
 
-### Rust 测试 (13 个)
+### Rust 测试 (59 个)
 
 ```
-matcher_test::test_two_person_cycle      ✅
-matcher_test::test_three_person_cycle    ✅
-matcher_test::test_no_cycle_single       ✅
-matcher_test::test_no_cycle_mismatch     ✅
-matcher_test::test_two_separate_cycles   ✅
+# 单元测试 (17)
+store::tests::test_item_row_into_item           ✅
+store::tests::test_item_row_status_variants      ✅
+store::tests::test_item_row_unknown_status_defaults_to_idle ✅
+store::tests::test_demand_row_into_demand        ✅
+store::tests::test_user_row_into_user            ✅
+auth::tests::test_create_and_verify_token        ✅
+auth::tests::test_verify_invalid_token           ✅
+auth::tests::test_claims_serialization           ✅
+ws::tests::test_ws_hub_new                       ✅
+ws::tests::test_ws_hub_default                   ✅
+ws::tests::test_ws_hub_broadcast                 ✅
+ws::tests::test_ws_hub_multiple_subscribers      ✅
+ws::tests::test_ws_hub_notify_no_subscribers     ✅
+error::tests::test_not_found_returns_404         ✅
+error::tests::test_bad_request_returns_400       ✅
+error::tests::test_internal_msg_returns_500      ✅
+error::tests::test_serialization_returns_500     ✅
+
+# 模型测试 (10)
 models_test::test_swap_cycle_valid_two_person    ✅
 models_test::test_swap_cycle_valid_three_person  ✅
 models_test::test_swap_cycle_invalid_single_leg  ✅
@@ -63,6 +78,46 @@ models_test::test_swap_cycle_invalid_broken_chain ✅
 models_test::test_item_status_serialization      ✅
 models_test::test_item_serialization_roundtrip   ✅
 models_test::test_demand_serialization_roundtrip ✅
+models_test::test_item_status_transitions        ✅
+models_test::test_available_transitions          ✅
+
+# 匹配引擎测试 (5)
+matcher_test::test_two_person_cycle              ✅
+matcher_test::test_three_person_cycle            ✅
+matcher_test::test_no_cycle_single               ✅
+matcher_test::test_no_cycle_mismatch             ✅
+matcher_test::test_two_separate_cycles           ✅
+
+# Store 集成测试 (10)
+store_test::test_create_and_get_item             ✅
+store_test::test_get_item_not_found              ✅
+store_test::test_list_items                      ✅
+store_test::test_item_exists                     ✅
+store_test::test_update_item_status              ✅
+store_test::test_update_item_status_not_found    ✅
+store_test::test_create_and_list_demands         ✅
+store_test::test_save_and_list_cycles            ✅
+store_test::test_create_and_get_user             ✅
+store_test::test_get_user_not_found              ✅
+
+# Handler 集成测试 (17)
+handler_test::test_health_endpoint               ✅
+handler_test::test_create_item_success           ✅
+handler_test::test_create_item_empty_title       ✅
+handler_test::test_create_item_empty_tags        ✅
+handler_test::test_create_item_invalid_value_tier ✅
+handler_test::test_get_item_not_found            ✅
+handler_test::test_list_items                    ✅
+handler_test::test_create_demand_success         ✅
+handler_test::test_create_demand_empty_offer_tags ✅
+handler_test::test_create_demand_empty_target_tags ✅
+handler_test::test_list_demands                  ✅
+handler_test::test_list_cycles                   ✅
+handler_test::test_confirm_swap_not_found        ✅
+handler_test::test_register_and_login            ✅
+handler_test::test_register_empty_username       ✅
+handler_test::test_register_short_password       ✅
+handler_test::test_login_wrong_password          ✅
 ```
 
 ### Python 测试 (10 个)
@@ -197,6 +252,16 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 | CI 增强 | ✅ | taplo + deny + typos + 自动 Release |
 
 ---
+
+### 2026-05-28 Phase 7 - 集成测试补强
+
+| 任务 | 状态 | 说明 |
+|------|------|------|
+| error 模块测试 | ✅ | 4 个测试：NotFound→404, BadRequest→400, InternalMsg→500, Serialization→500 |
+| store 集成测试 | ✅ | 10 个测试：Item CRUD(6) + Demand(1) + Cycle(1) + User(2)，真实数据库 |
+| handler 集成测试 | ✅ | 17 个测试：Health(1) + Items(5) + Demands(4) + Cycles(2) + Auth(5) |
+| tower 依赖 | ✅ | 添加 tower dev-dependency 用于 axum 测试 |
+| sqlx macros feature | ✅ | 启用 sqlx::test 宏支持 |
 
 ### 2026-05-28 Phase 6 - 代码质量提升
 

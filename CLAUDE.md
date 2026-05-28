@@ -202,7 +202,7 @@ just db-schema                # 查看表结构
 - 安装 Trellis AI 工作流框架（`trellis init --claude -u qiaopengjun`）
 
 ### 当前状态（2026-05-28）
-- Rust 测试：28 个全部通过
+- Rust 测试：59 个全部通过（单元 17 + 模型 10 + 匹配 5 + Store 集成 10 + Handler 集成 17）
 - Python 测试：10 个全部通过
 - 前端路由：9 个
 - 所有 P0/P1/P2 功能已完成
