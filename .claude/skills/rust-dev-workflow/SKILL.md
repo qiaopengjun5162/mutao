@@ -55,8 +55,8 @@ cargo llvm-cov nextest --lcov --output-path lcov.info         # 覆盖率 LCOV�
 每次重大变更后更新：
 - `PROGRESS.md` — 进度记录（已完成、待办、测试覆盖）
 - `CLAUDE.md` — 项目文档（架构、API、命令速查）
-- `README.md` — 中文 README（项目介绍、快速开始、API、架构）
-- `README_en.md` — 英文 README（面向国际社区）
+- `README.md` — 英文 README（默认，面向国际社区）
+- `README_zh.md` — 中文 README（项目介绍、快速开始、API、架构）
 - `CONTRIBUTING.md` — 贡献指南（开源项目必备）
 
 ## 错误处理模式

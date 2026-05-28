@@ -1,90 +1,90 @@
-# 木桃 Mutao
+# Mutao (木桃)
 
-> "投我以木桃，报之以琼瑶。" ——《诗经》
+> "Throw me a peach, I'll repay you with a jade." — *The Book of Songs*
 
-AI 撮合 + Web3 溯源的免现金实体易物平台，面向数字游民与青年社区。
+A cash-free barter platform with AI matching and Web3 provenance, built for digital nomads and youth communities.
 
-## 技术栈
+## Tech Stack
 
-| 层 | 技术 | 职责 |
+| Layer | Technology | Responsibility |
 |---|---|---|
-| 核心引擎 | Rust (axum 0.7 + tokio) | API 路由、图匹配算法、状态机 |
-| 持久化 | PostgreSQL (sqlx) | 物品、需求、交换环存盘 |
-| AI 手术刀 | Python | 图片/文本 → 标签 + 价值梯度 |
-| Web3 存证 | Solidity | 物品流转履历上链（多链接口） |
-| 前端 | Next.js + shadcn/ui | 用户界面（Turbopack） |
+| Core Engine | Rust (axum 0.7 + tokio) | API routing, graph matching, state machine |
+| Persistence | PostgreSQL (sqlx) | Items, demands, swap cycles |
+| AI Scalpel | Python | Image/text → tags + value tier |
+| Web3 Attestation | Solidity | On-chain provenance (multi-chain interface) |
+| Frontend | Next.js + shadcn/ui | User interface (Turbopack) |
 
-## 快速开始
+## Quick Start
 
 ```bash
-# 前置条件：PostgreSQL 运行中
-cp .env.example .env   # 编辑 DATABASE_URL
-just db-init           # 初始化数据库
-cargo run              # 启动后端 http://localhost:3000
+# Prerequisites: PostgreSQL running
+cp .env.example .env   # Edit DATABASE_URL
+just db-init           # Initialize database
+cargo run              # Start backend at http://localhost:3000
 
-# 前端
+# Frontend
 cd frontend && pnpm install && pnpm run dev   # http://localhost:3001
 ```
 
-## API 端点
+## API Endpoints
 
-| 方法 | 路径 | 说明 |
+| Method | Path | Description |
 |---|---|---|
-| GET | /api/health | 健康检查 |
-| POST | /api/auth/register | 用户注册 |
-| POST | /api/auth/login | 用户登录 |
-| POST | /api/items | 创建物品 |
-| GET | /api/items | 物品列表 |
-| GET | /api/items/:id | 物品详情 |
-| POST | /api/items/:id/match | 触发匹配 |
-| PATCH | /api/items/:id/status | 更新物品状态 |
-| POST | /api/items/analyze | AI 标签提取 |
-| POST | /api/items/:id/attest | Web3 存证 |
-| GET | /api/items/:id/history | 链上历史 |
-| POST | /api/demands | 创建交换意向 |
-| GET | /api/demands | 意向列表 |
-| GET | /api/cycles | 交换环列表 |
-| POST | /api/cycles/:id/confirm | 确认交换 |
-| GET | /api/ws | WebSocket 实时通知 |
+| GET | /api/health | Health check |
+| POST | /api/auth/register | User registration |
+| POST | /api/auth/login | User login |
+| POST | /api/items | Create item |
+| GET | /api/items | List items |
+| GET | /api/items/:id | Item detail |
+| POST | /api/items/:id/match | Trigger matching |
+| PATCH | /api/items/:id/status | Update item status |
+| POST | /api/items/analyze | AI tag extraction |
+| POST | /api/items/:id/attest | Web3 attestation |
+| GET | /api/items/:id/history | On-chain history |
+| POST | /api/demands | Create demand |
+| GET | /api/demands | List demands |
+| GET | /api/cycles | List swap cycles |
+| POST | /api/cycles/:id/confirm | Confirm swap |
+| GET | /api/ws | WebSocket notifications |
 
-## 项目结构
+## Project Structure
 
 ```
 mutao/
 ├── src/
-│   ├── main.rs          # axum 路由 + 处理器
-│   ├── lib.rs           # AppState + 库入口
-│   ├── models.rs        # 领域模型
-│   ├── matcher.rs       # DFS 多节点交换环发现
-│   ├── store.rs         # 数据访问层
-│   ├── auth.rs          # JWT 认证
-│   ├── error.rs         # 统一错误处理
-│   ├── ws.rs            # WebSocket 广播
-│   └── blockchain/      # 多链适配器
-├── frontend/src/app/    # Next.js 页面（9 个路由）
-├── scalpel/             # Python AI 手术刀
-├── contracts/           # Solidity 存证合约
-├── migrations/          # 数据库迁移
-└── tests/               # Rust 测试（18 个）
+│   ├── main.rs          # axum routes + handlers
+│   ├── lib.rs           # AppState + library entry
+│   ├── models.rs        # Domain models
+│   ├── matcher.rs       # DFS multi-node cycle discovery
+│   ├── store.rs         # Data access layer
+│   ├── auth.rs          # JWT authentication
+│   ├── error.rs         # Unified error handling
+│   ├── ws.rs            # WebSocket broadcast hub
+│   └── blockchain/      # Multi-chain adapters
+├── frontend/src/app/    # Next.js pages (9 routes)
+├── scalpel/             # Python AI scalpel
+├── contracts/           # Solidity attestation contract
+├── migrations/          # Database migrations
+└── tests/               # Rust tests (18)
 ```
 
-## 测试
+## Testing
 
 ```bash
-cargo nextest run             # Rust 测试 (18 个)
-cd scalpel && pytest -v       # Python 测试 (10 个)
-just test-all                 # 全部测试
-cargo llvm-cov nextest --html # 覆盖率报告
+cargo nextest run             # Rust tests (18)
+cd scalpel && pytest -v       # Python tests (10)
+just test-all                 # All tests
+cargo llvm-cov nextest --html # Coverage report
 ```
 
-## 核心算法
+## Core Algorithm
 
-`matcher::Matcher::find_cycles()` 使用 DFS 在有向图中搜索长度 2~4 的交换环：
+`matcher::Matcher::find_cycles()` uses DFS to discover swap cycles of length 2-4 in a directed graph:
 
-1. **建边**：`Demand[i].offer_tags` 与 `Demand[j].target_tags` 有交集时，`i → j`
-2. **DFS**：从每个节点出发，搜索回到起点的有向环
-3. **过滤**：去重、同用户去重、验证环闭合
+1. **Build edges**: `i → j` when `Demand[i].offer_tags` intersects `Demand[j].target_tags`
+2. **DFS**: From each node, search for a directed cycle back to the start
+3. **Filter**: Deduplicate, remove same-user cycles, validate cycle closure
 
-## 许可证
+## License
 
 MIT
