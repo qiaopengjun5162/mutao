@@ -249,3 +249,90 @@ impl UserRow {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_item_row_into_item() {
+        let row = ItemRow {
+            id: Uuid::new_v4(),
+            owner_id: Uuid::new_v4(),
+            title: "机械键盘".into(),
+            description: "用了两年".into(),
+            image_url: "https://example.com/img.jpg".into(),
+            tags: vec!["键盘".into(), "外设".into()],
+            value_tier: 3,
+            status: "Idle".into(),
+            created_at: chrono::Utc::now(),
+        };
+        let item = row.into_item();
+        assert_eq!(item.title, "机械键盘");
+        assert_eq!(item.value_tier, 3);
+        assert_eq!(item.status, ItemStatus::Idle);
+        assert_eq!(item.tags.len(), 2);
+    }
+
+    #[test]
+    fn test_item_row_status_variants() {
+        let make = |status: &str| ItemRow {
+            id: Uuid::new_v4(),
+            owner_id: Uuid::new_v4(),
+            title: "t".into(),
+            description: "d".into(),
+            image_url: "".into(),
+            tags: vec![],
+            value_tier: 1,
+            status: status.into(),
+            created_at: chrono::Utc::now(),
+        };
+        assert_eq!(make("Matching").into_item().status, ItemStatus::Matching);
+        assert_eq!(make("Completed").into_item().status, ItemStatus::Completed);
+        assert_eq!(make("Archived").into_item().status, ItemStatus::Archived);
+    }
+
+    #[test]
+    fn test_item_row_unknown_status_defaults_to_idle() {
+        let row = ItemRow {
+            id: Uuid::new_v4(),
+            owner_id: Uuid::new_v4(),
+            title: "t".into(),
+            description: "d".into(),
+            image_url: "".into(),
+            tags: vec![],
+            value_tier: 1,
+            status: "SomethingElse".into(),
+            created_at: chrono::Utc::now(),
+        };
+        assert_eq!(row.into_item().status, ItemStatus::Idle);
+    }
+
+    #[test]
+    fn test_demand_row_into_demand() {
+        let row = DemandRow {
+            id: Uuid::new_v4(),
+            user_id: Uuid::new_v4(),
+            offer_item_id: Uuid::new_v4(),
+            offer_tags: vec!["书籍".into()],
+            target_tags: vec!["键盘".into()],
+            created_at: chrono::Utc::now(),
+        };
+        let demand = row.into_demand();
+        assert_eq!(demand.offer_tags, vec!["书籍"]);
+        assert_eq!(demand.target_tags, vec!["键盘"]);
+    }
+
+    #[test]
+    fn test_user_row_into_user() {
+        let row = UserRow {
+            id: Uuid::new_v4(),
+            username: "alice".into(),
+            password_hash: "hash123".into(),
+            created_at: chrono::Utc::now(),
+        };
+        let user = row.into_user();
+        assert_eq!(user.username, "alice");
+        assert_eq!(user.password_hash, "hash123");
+    }
+}

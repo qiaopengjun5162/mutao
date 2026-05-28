@@ -85,3 +85,63 @@ async fn handle_socket(socket: WebSocket, mut rx: tokio::sync::broadcast::Receiv
 
     tracing::debug!("WebSocket 连接已关闭");
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ws_hub_new() {
+        let hub = WsHub::new();
+        // 确保可以正常创建
+        let _rx = hub.subscribe();
+    }
+
+    #[test]
+    fn test_ws_hub_default() {
+        let hub = WsHub::default();
+        let _rx = hub.subscribe();
+    }
+
+    #[test]
+    fn test_ws_hub_notify_no_subscribers() {
+        let hub = WsHub::new();
+        // 无订阅者时 notify 不应 panic
+        hub.notify(&WsNotification {
+            event: "test".into(),
+            data: serde_json::json!({"key": "value"}),
+        });
+    }
+
+    #[tokio::test]
+    async fn test_ws_hub_broadcast() {
+        let hub = WsHub::new();
+        let mut rx = hub.subscribe();
+
+        let notification = WsNotification {
+            event: "match_found".into(),
+            data: serde_json::json!({"item_id": "abc", "cycles_count": 1}),
+        };
+        hub.notify(&notification);
+
+        let msg = rx.recv().await.unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&msg).unwrap();
+        assert_eq!(parsed["event"], "match_found");
+        assert_eq!(parsed["data"]["cycles_count"], 1);
+    }
+
+    #[tokio::test]
+    async fn test_ws_hub_multiple_subscribers() {
+        let hub = WsHub::new();
+        let mut rx1 = hub.subscribe();
+        let mut rx2 = hub.subscribe();
+
+        hub.notify(&WsNotification {
+            event: "test".into(),
+            data: serde_json::json!(null),
+        });
+
+        assert!(rx1.recv().await.is_ok());
+        assert!(rx2.recv().await.is_ok());
+    }
+}
