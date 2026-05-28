@@ -47,6 +47,7 @@ impl Matcher {
         cycles
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn dfs(
         start: usize,
         current: usize,

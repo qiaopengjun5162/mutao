@@ -80,7 +80,7 @@ impl Store {
     }
 
     pub async fn save_cycle(&self, cycle: &SwapCycle) -> Result<(), sqlx::Error> {
-        let data = serde_json::to_value(cycle).map_err(|e| sqlx::Error::decode(e))?;
+        let data = serde_json::to_value(cycle).map_err(sqlx::Error::decode)?;
         sqlx::query("INSERT INTO swap_cycles (id, data, created_at) VALUES ($1, $2, $3)")
             .bind(cycle.id)
             .bind(&data)

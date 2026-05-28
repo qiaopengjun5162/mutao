@@ -20,6 +20,12 @@ pub struct WsHub {
     tx: tokio::sync::broadcast::Sender<String>,
 }
 
+impl Default for WsHub {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WsHub {
     pub fn new() -> Self {
         let (tx, _) = tokio::sync::broadcast::channel(256);
@@ -56,7 +62,7 @@ async fn handle_socket(socket: WebSocket, mut rx: tokio::sync::broadcast::Receiv
     // 转发任务：将 broadcast 消息推送给客户端
     let mut send_task = tokio::spawn(async move {
         while let Ok(msg) = rx.recv().await {
-            if sender.send(Message::Text(msg.into())).await.is_err() {
+            if sender.send(Message::Text(msg)).await.is_err() {
                 break;
             }
         }
