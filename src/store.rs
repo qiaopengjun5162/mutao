@@ -124,6 +124,15 @@ impl Store {
         Ok(exists)
     }
 
+    pub async fn update_item_image(&self, id: Uuid, image_url: &str) -> Result<bool, sqlx::Error> {
+        let result = sqlx::query("UPDATE items SET image_url = $1 WHERE id = $2")
+            .bind(image_url)
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        Ok(result.rows_affected() > 0)
+    }
+
     pub async fn update_item_status(
         &self,
         id: Uuid,

@@ -4,6 +4,7 @@ pub mod blockchain_handler;
 pub mod cycles;
 pub mod demands;
 pub mod items;
+pub mod upload;
 
 use std::sync::Arc;
 

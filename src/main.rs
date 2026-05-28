@@ -7,7 +7,9 @@ use utoipa_swagger_ui::SwaggerUi;
 use mutao::api_doc::ApiDoc;
 use mutao::blockchain::ChainManager;
 use mutao::blockchain::ethereum::{EthereumAdapter, EthereumConfig};
-use mutao::handlers::{SharedState, ai, auth_handler, blockchain_handler, cycles, demands, items};
+use mutao::handlers::{
+    SharedState, ai, auth_handler, blockchain_handler, cycles, demands, items, upload,
+};
 use mutao::store::Store;
 use mutao::ws::WsHub;
 
@@ -56,6 +58,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/items/analyze", post(ai::analyze_item))
         .route("/api/items/:id", get(items::get_item))
         .route("/api/items/:id/match", post(cycles::match_item))
+        .route("/api/items/:id/image", post(upload::upload_image))
         .route(
             "/api/items/:id/status",
             axum::routing::patch(items::update_item_status),
@@ -77,6 +80,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/health", get(items::health))
         .route("/api/ws", get(mutao::ws::ws_handler))
         .with_state(state);
+
+    let app = app.nest_service("/uploads", tower_http::services::ServeDir::new("uploads"));
 
     let addr = "0.0.0.0:3000";
     tracing::info!("木桃 Mutao 运行在 http://{addr}");
