@@ -16,13 +16,13 @@ export default function DemandsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="container mx-auto p-8">加载中...</div>;
+  if (loading) return <div className="container mx-auto p-4 md:p-8">加载中...</div>;
   if (error)
-    return <div className="container mx-auto p-8 text-red-500">{error}</div>;
+    return <div className="container mx-auto p-4 md:p-8 text-red-500">{error}</div>;
 
   return (
-    <div className="container mx-auto p-8">
-      <h1 className="text-2xl font-bold mb-6">交换意向</h1>
+    <div className="container mx-auto p-4 md:p-8">
+      <h1 className="text-xl md:text-2xl font-bold mb-6">交换意向</h1>
 
       {demands.length === 0 ? (
         <p className="text-muted-foreground">暂无交换意向</p>

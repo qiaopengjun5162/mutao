@@ -26,14 +26,14 @@ export default function ItemsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="container mx-auto p-8">加载中...</div>;
+  if (loading) return <div className="container mx-auto p-4 md:p-8">加载中...</div>;
   if (error)
-    return <div className="container mx-auto p-8 text-red-500">{error}</div>;
+    return <div className="container mx-auto p-4 md:p-8 text-red-500">{error}</div>;
 
   return (
-    <div className="container mx-auto p-8">
+    <div className="container mx-auto p-4 md:p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">物品列表</h1>
+        <h1 className="text-xl md:text-2xl font-bold">物品列表</h1>
         <Link
           href="/items/new"
           className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
