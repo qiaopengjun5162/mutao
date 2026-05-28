@@ -4,20 +4,27 @@
 
 AI 撮合 + Web3 溯源的免现金实体易物平台，面向数字游民与青年社区。
 
+[English](README.md)
+
 ## 技术栈
 
 | 层 | 技术 | 职责 |
 |---|---|---|
-| 核心引擎 | Rust (axum 0.7 + tokio) | API 路由、图匹配算法、状态机 |
-| 持久化 | PostgreSQL (sqlx) | 物品、需求、交换环存盘 |
-| AI 手术刀 | Python | 图片/文本 → 标签 + 价值梯度 |
+| 核心引擎 | Rust 1.87+ (axum 0.7 + tokio) | API 路由、图匹配算法、状态机 |
+| 持久化 | PostgreSQL 16 (sqlx 0.7) | 物品、需求、交换环存盘 |
+| AI 手术刀 | Python 3.12+ | 图片/文本 → 标签 + 价值梯度 |
 | Web3 存证 | Solidity | 物品流转履历上链（多链接口） |
-| 前端 | Next.js + shadcn/ui | 用户界面（Turbopack） |
+| 前端 | Next.js 16 + shadcn/ui | 用户界面（Turbopack） |
 
 ## 快速开始
 
 ```bash
-# 前置条件：PostgreSQL 运行中
+# 方式一：Docker 一键启动（推荐）
+cp .env.example .env   # 编辑 JWT_SECRET
+just docker-up         # 启动所有服务
+
+# 方式二：本地开发
+# 前置条件：PostgreSQL 运行中，Rust 1.87+
 cp .env.example .env   # 编辑 DATABASE_URL
 just db-init           # 初始化数据库
 cargo run              # 启动后端 http://localhost:3000
@@ -65,13 +72,16 @@ mutao/
 ├── scalpel/             # Python AI 手术刀
 ├── contracts/           # Solidity 存证合约
 ├── migrations/          # 数据库迁移
-└── tests/               # Rust 测试（18 个）
+├── tests/               # Rust 测试（59 个）
+├── Dockerfile           # Rust 后端镜像（多阶段构建）
+├── Dockerfile.scalpel   # Python 手术刀镜像
+└── docker-compose.yml   # 后端 + DB + 手术刀编排
 ```
 
 ## 测试
 
 ```bash
-cargo nextest run             # Rust 测试 (18 个)
+cargo nextest run             # Rust 测试 (59 个)
 cd scalpel && pytest -v       # Python 测试 (10 个)
 just test-all                 # 全部测试
 cargo llvm-cov nextest --html # 覆盖率报告

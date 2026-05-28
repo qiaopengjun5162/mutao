@@ -4,20 +4,27 @@
 
 A cash-free barter platform with AI matching and Web3 provenance, built for digital nomads and youth communities.
 
+[中文文档](README_zh.md)
+
 ## Tech Stack
 
 | Layer | Technology | Responsibility |
 |---|---|---|
-| Core Engine | Rust (axum 0.7 + tokio) | API routing, graph matching, state machine |
-| Persistence | PostgreSQL (sqlx) | Items, demands, swap cycles |
-| AI Scalpel | Python | Image/text → tags + value tier |
+| Core Engine | Rust 1.87+ (axum 0.7 + tokio) | API routing, graph matching, state machine |
+| Persistence | PostgreSQL 16 (sqlx 0.7) | Items, demands, swap cycles |
+| AI Scalpel | Python 3.12+ | Image/text → tags + value tier |
 | Web3 Attestation | Solidity | On-chain provenance (multi-chain interface) |
-| Frontend | Next.js + shadcn/ui | User interface (Turbopack) |
+| Frontend | Next.js 16 + shadcn/ui | User interface (Turbopack) |
 
 ## Quick Start
 
 ```bash
-# Prerequisites: PostgreSQL running
+# Option 1: Docker (recommended)
+cp .env.example .env   # Edit JWT_SECRET
+just docker-up         # Start all services
+
+# Option 2: Local development
+# Prerequisites: PostgreSQL running, Rust 1.87+
 cp .env.example .env   # Edit DATABASE_URL
 just db-init           # Initialize database
 cargo run              # Start backend at http://localhost:3000
@@ -65,13 +72,16 @@ mutao/
 ├── scalpel/             # Python AI scalpel
 ├── contracts/           # Solidity attestation contract
 ├── migrations/          # Database migrations
-└── tests/               # Rust tests (18)
+├── tests/               # Rust tests (59)
+├── Dockerfile           # Rust backend image (multi-stage)
+├── Dockerfile.scalpel   # Python scalpel image
+└── docker-compose.yml   # Backend + DB + Scalpel orchestration
 ```
 
 ## Testing
 
 ```bash
-cargo nextest run             # Rust tests (18)
+cargo nextest run             # Rust tests (59)
 cd scalpel && pytest -v       # Python tests (10)
 just test-all                 # All tests
 cargo llvm-cov nextest --html # Coverage report
