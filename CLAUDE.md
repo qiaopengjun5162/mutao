@@ -140,7 +140,7 @@ mutao/
 ## 测试
 
 ```bash
-cargo nextest run             # Rust 测试 (18 个)
+cargo nextest run             # Rust 测试 (64 个)
 cd scalpel && pytest -v       # Python 测试 (10 个)
 just test-all                 # 全部测试
 cargo llvm-cov nextest --html # 覆盖率报告
@@ -256,7 +256,7 @@ just db-schema                # 查看表结构
 - commit message 改用英语（已记录偏好）
 
 ### 当前状态（2026-05-29）
-- Rust 测试：62 个（60 通过 + 2 需隔离 DB）
+- Rust 测试：64 个全部通过
 - Python 测试：10 个全部通过
 - 前端路由：9 个
 - API 端点：17 个（含图片上传）

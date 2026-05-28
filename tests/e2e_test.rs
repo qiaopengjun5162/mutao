@@ -42,12 +42,6 @@ fn build_router(pool: PgPool) -> Router {
         .with_state(state)
 }
 
-async fn setup_pool() -> PgPool {
-    let database_url =
-        std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://localhost/mutao".into());
-    PgPool::connect(&database_url).await.unwrap()
-}
-
 async fn post_json(app: Router, uri: &str, body: Value) -> (Router, StatusCode, Value) {
     let resp = app
         .clone()
@@ -110,10 +104,8 @@ async fn register(app: Router, username: &str) -> (Router, Value) {
 
 // ---- E2E: Full swap flow ----
 
-#[tokio::test]
-#[ignore] // requires isolated database - run with: cargo test --test e2e_test -- --ignored
-async fn e2e_full_swap_flow() {
-    let pool = setup_pool().await;
+#[sqlx::test]
+async fn e2e_full_swap_flow(pool: PgPool) {
     let app = build_router(pool);
     let prefix = Uuid::new_v4().as_simple().to_string();
 
@@ -225,9 +217,8 @@ async fn e2e_full_swap_flow() {
 
 // ---- E2E: Duplicate registration ----
 
-#[tokio::test]
-async fn e2e_duplicate_registration() {
-    let pool = setup_pool().await;
+#[sqlx::test]
+async fn e2e_duplicate_registration(pool: PgPool) {
     let app = build_router(pool);
     let username = format!("dup_{}", Uuid::new_v4().as_simple());
 
@@ -251,9 +242,8 @@ async fn e2e_duplicate_registration() {
 
 // ---- E2E: Login with wrong password ----
 
-#[tokio::test]
-async fn e2e_login_wrong_password() {
-    let pool = setup_pool().await;
+#[sqlx::test]
+async fn e2e_login_wrong_password(pool: PgPool) {
     let app = build_router(pool);
     let username = format!("wrong_{}", Uuid::new_v4().as_simple());
 
@@ -271,9 +261,8 @@ async fn e2e_login_wrong_password() {
 
 // ---- E2E: Item status transitions ----
 
-#[tokio::test]
-async fn e2e_item_status_transitions() {
-    let pool = setup_pool().await;
+#[sqlx::test]
+async fn e2e_item_status_transitions(pool: PgPool) {
     let app = build_router(pool);
     let (app, user) = register(app, &format!("status_{}", Uuid::new_v4().as_simple())).await;
     let user_id: Uuid = serde_json::from_value(user["user_id"].clone()).unwrap();
@@ -334,10 +323,8 @@ async fn e2e_item_status_transitions() {
 
 // ---- E2E: No cycle found ----
 
-#[tokio::test]
-#[ignore] // requires isolated database - run with: cargo test --test e2e_test -- --ignored
-async fn e2e_no_cycle_found() {
-    let pool = setup_pool().await;
+#[sqlx::test]
+async fn e2e_no_cycle_found(pool: PgPool) {
     let app = build_router(pool);
     let prefix = Uuid::new_v4().as_simple().to_string();
     let (app, user) = register(app, &format!("nocycle_{prefix}")).await;

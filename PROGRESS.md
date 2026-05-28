@@ -47,7 +47,7 @@ AI 撮合 + Web3 溯源的免现金实体易物平台，面向数字游民与青
 
 ## 三、测试覆盖
 
-### Rust 测试 (62 个)
+### Rust 测试 (64 个)
 
 ```
 # 单元测试 (17)
@@ -119,12 +119,12 @@ handler_test::test_register_empty_username       ✅
 handler_test::test_register_short_password       ✅
 handler_test::test_login_wrong_password          ✅
 
-# E2E 测试 (5 个，3 通过 + 2 需隔离 DB)
+# E2E 测试 (5 个)
 e2e_test::e2e_duplicate_registration             ✅
 e2e_test::e2e_item_status_transitions            ✅
 e2e_test::e2e_login_wrong_password               ✅
-e2e_test::e2e_full_swap_flow                     🔄 需隔离数据库
-e2e_test::e2e_no_cycle_found                     🔄 需隔离数据库
+e2e_test::e2e_full_swap_flow                     ✅
+e2e_test::e2e_no_cycle_found                     ✅
 ```
 
 ### Python 测试 (10 个)
@@ -260,6 +260,15 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 
 ---
 
+### 2026-05-29 Phase 12 - E2E 测试修复
+
+| 任务 | 状态 | 说明 |
+|------|------|------|
+| E2E 测试隔离 | ✅ | 使用 `#[sqlx::test]` 宏替代 `#[tokio::test]` |
+| 移除 `#[ignore]` | ✅ | 5 个 E2E 测试全部可正常运行 |
+| sqlx migrate feature | ✅ | 添加 `migrate` feature 支持自动迁移 |
+| 测试数量 | ✅ | 64 个 Rust 测试全部通过，0 个忽略 |
+
 ### 2026-05-28 Phase 10 - 图片上传
 
 | 任务 | 状态 | 说明 |
@@ -381,4 +390,30 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 | Docker 构建 Rust 1.87 版本不足 | 升级到 rust:1.88-bookworm |
 | Docker 端口 3000 冲突 | 改用 3001 端口映射 |
 | E2E 测试数据库污染 | 使用唯一 UUID 前缀 + 按 item ID 查找特定交换环 |
-| E2E 测试 confirm_swap 后物品仍为 Idle | 标记 #[ignore]，需要隔离数据库环境 |
+| E2E 测试 confirm_swap 后物品仍为 Idle | 使用 `#[sqlx::test]` 宏实现数据库隔离 |
+| E2E 测试需要隔离数据库 | 使用 `#[sqlx::test]` 宏替代 `#[tokio::test]`，每个测试自动获得独立数据库 |
+
+---
+
+## 八、当前状态（2026-05-29）
+
+| 指标 | 数值 |
+|------|------|
+| Rust 测试 | 64 个全部通过 |
+| Python 测试 | 10 个全部通过 |
+| 前端路由 | 9 个 |
+| API 端点 | 17 个 |
+| Docker 部署 | 已验证可用（localhost:3001） |
+| Swagger UI | /swagger-ui 可用 |
+| 项目完成度 | ~99% |
+
+**功能状态**：
+- ✅ 核心引擎：匹配算法、物品/需求/交换环 CRUD
+- ✅ 用户认证：JWT 注册/登录
+- ✅ WebSocket 实时通知
+- ✅ AI 标签提取（调用 scalpel）
+- ✅ Web3 存证（多链接口）
+- ✅ 图片上传（multipart）
+- ✅ Docker 部署
+- ✅ OpenAPI 文档
+- ✅ 所有测试通过（含 E2E）
