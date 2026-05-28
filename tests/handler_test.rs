@@ -46,6 +46,50 @@ async fn setup_app() -> Router {
         .with_state(state)
 }
 
+async fn register_user(app: &Router, username: &str) -> Value {
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/auth/register")
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(
+                    json!({ "username": username, "password": "testpass123" }).to_string(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    serde_json::from_slice(&body).unwrap()
+}
+
+async fn create_item(app: &Router, owner_id: Uuid, title: &str) -> Value {
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/items")
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(
+                    json!({
+                        "owner_id": owner_id,
+                        "title": title,
+                        "tags": ["测试"],
+                        "value_tier": 3
+                    })
+                    .to_string(),
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    serde_json::from_slice(&body).unwrap()
+}
+
 // ---- Health ----
 
 #[tokio::test]
@@ -68,7 +112,11 @@ async fn test_health_endpoint() {
 #[tokio::test]
 async fn test_create_item_success() {
     let app = setup_app().await;
+    let user = register_user(&app, &format!("item_{}", Uuid::new_v4().as_simple())).await;
+    let owner_id: Uuid = serde_json::from_value(user["user_id"].clone()).unwrap();
+
     let resp = app
+        .clone()
         .oneshot(
             Request::builder()
                 .method("POST")
@@ -76,7 +124,7 @@ async fn test_create_item_success() {
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(Body::from(
                     json!({
-                        "owner_id": Uuid::new_v4(),
+                        "owner_id": owner_id,
                         "title": "机械键盘",
                         "tags": ["键盘", "外设"],
                         "value_tier": 3
@@ -214,6 +262,11 @@ async fn test_list_items() {
 #[tokio::test]
 async fn test_create_demand_success() {
     let app = setup_app().await;
+    let user = register_user(&app, &format!("demand_{}", Uuid::new_v4().as_simple())).await;
+    let user_id: Uuid = serde_json::from_value(user["user_id"].clone()).unwrap();
+    let item = create_item(&app, user_id, "书籍").await;
+    let item_id: Uuid = serde_json::from_value(item["id"].clone()).unwrap();
+
     let resp = app
         .oneshot(
             Request::builder()
@@ -222,8 +275,8 @@ async fn test_create_demand_success() {
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(Body::from(
                     json!({
-                        "user_id": Uuid::new_v4(),
-                        "offer_item_id": Uuid::new_v4(),
+                        "user_id": user_id,
+                        "offer_item_id": item_id,
                         "offer_tags": ["书籍"],
                         "target_tags": ["键盘"]
                     })
@@ -350,11 +403,7 @@ async fn test_register_and_login() {
                 .uri("/api/auth/register")
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(Body::from(
-                    json!({
-                        "username": username,
-                        "password": "testpass123"
-                    })
-                    .to_string(),
+                    json!({ "username": username, "password": "testpass123" }).to_string(),
                 ))
                 .unwrap(),
         )
@@ -374,11 +423,7 @@ async fn test_register_and_login() {
                 .uri("/api/auth/login")
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(Body::from(
-                    json!({
-                        "username": username,
-                        "password": "testpass123"
-                    })
-                    .to_string(),
+                    json!({ "username": username, "password": "testpass123" }).to_string(),
                 ))
                 .unwrap(),
         )
@@ -401,11 +446,7 @@ async fn test_register_empty_username() {
                 .uri("/api/auth/register")
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(Body::from(
-                    json!({
-                        "username": "   ",
-                        "password": "testpass123"
-                    })
-                    .to_string(),
+                    json!({ "username": "   ", "password": "testpass123" }).to_string(),
                 ))
                 .unwrap(),
         )
@@ -425,11 +466,7 @@ async fn test_register_short_password() {
                 .uri("/api/auth/register")
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(Body::from(
-                    json!({
-                        "username": "newuser",
-                        "password": "123"
-                    })
-                    .to_string(),
+                    json!({ "username": "newuser", "password": "123" }).to_string(),
                 ))
                 .unwrap(),
         )
@@ -452,11 +489,7 @@ async fn test_login_wrong_password() {
                 .uri("/api/auth/register")
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(Body::from(
-                    json!({
-                        "username": username,
-                        "password": "correctpass"
-                    })
-                    .to_string(),
+                    json!({ "username": username, "password": "correctpass" }).to_string(),
                 ))
                 .unwrap(),
         )
@@ -471,11 +504,7 @@ async fn test_login_wrong_password() {
                 .uri("/api/auth/login")
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(Body::from(
-                    json!({
-                        "username": username,
-                        "password": "wrongpass"
-                    })
-                    .to_string(),
+                    json!({ "username": username, "password": "wrongpass" }).to_string(),
                 ))
                 .unwrap(),
         )

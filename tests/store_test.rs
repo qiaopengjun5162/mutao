@@ -11,6 +11,17 @@ async fn setup_store() -> Store {
     Store::new(pool)
 }
 
+async fn create_test_user(store: &Store, username: &str) -> User {
+    let user = User {
+        id: Uuid::new_v4(),
+        username: username.into(),
+        password_hash: "$2b$12$fakehash".into(),
+        created_at: Utc::now(),
+    };
+    store.create_user(&user).await.unwrap();
+    user
+}
+
 fn make_item(owner_id: Uuid, title: &str, tags: Vec<&str>, value_tier: u8) -> Item {
     Item {
         id: Uuid::new_v4(),
@@ -36,22 +47,13 @@ fn make_demand(user_id: Uuid, offer_item_id: Uuid, offer: Vec<&str>, want: Vec<&
     }
 }
 
-fn make_user(username: &str) -> User {
-    User {
-        id: Uuid::new_v4(),
-        username: username.into(),
-        password_hash: "$2b$12$fakehash".into(),
-        created_at: Utc::now(),
-    }
-}
-
 // ---- Item CRUD ----
 
 #[tokio::test]
 async fn test_create_and_get_item() {
     let store = setup_store().await;
-    let owner = Uuid::new_v4();
-    let item = make_item(owner, "机械键盘", vec!["键盘", "外设"], 3);
+    let user = create_test_user(&store, &format!("item_{}", Uuid::new_v4().as_simple())).await;
+    let item = make_item(user.id, "机械键盘", vec!["键盘", "外设"], 3);
 
     store.create_item(&item).await.unwrap();
 
@@ -74,15 +76,14 @@ async fn test_get_item_not_found() {
 async fn test_list_items() {
     let store = setup_store().await;
     let items = store.list_items().await.unwrap();
-    // 列表查询成功即可，不依赖其他测试的数据
     let _ = items.len();
 }
 
 #[tokio::test]
 async fn test_item_exists() {
     let store = setup_store().await;
-    let owner = Uuid::new_v4();
-    let item = make_item(owner, "书籍", vec!["书"], 1);
+    let user = create_test_user(&store, &format!("exist_{}", Uuid::new_v4().as_simple())).await;
+    let item = make_item(user.id, "书籍", vec!["书"], 1);
 
     assert!(!store.item_exists(item.id).await.unwrap());
 
@@ -94,8 +95,8 @@ async fn test_item_exists() {
 #[tokio::test]
 async fn test_update_item_status() {
     let store = setup_store().await;
-    let owner = Uuid::new_v4();
-    let item = make_item(owner, "音箱", vec!["音频"], 4);
+    let user = create_test_user(&store, &format!("status_{}", Uuid::new_v4().as_simple())).await;
+    let item = make_item(user.id, "音箱", vec!["音频"], 4);
 
     store.create_item(&item).await.unwrap();
     assert!(store.update_item_status(item.id, &ItemStatus::Matching).await.unwrap());
@@ -116,10 +117,11 @@ async fn test_update_item_status_not_found() {
 #[tokio::test]
 async fn test_create_and_list_demands() {
     let store = setup_store().await;
-    let user_id = Uuid::new_v4();
-    let offer_item_id = Uuid::new_v4();
-    let demand = make_demand(user_id, offer_item_id, vec!["书籍"], vec!["键盘"]);
+    let user = create_test_user(&store, &format!("demand_{}", Uuid::new_v4().as_simple())).await;
+    let item = make_item(user.id, "书籍", vec!["书"], 1);
+    store.create_item(&item).await.unwrap();
 
+    let demand = make_demand(user.id, item.id, vec!["书籍"], vec!["键盘"]);
     store.create_demand(&demand).await.unwrap();
 
     let demands = store.list_demands().await.unwrap();
@@ -162,9 +164,7 @@ async fn test_save_and_list_cycles() {
 async fn test_create_and_get_user() {
     let store = setup_store().await;
     let username = format!("test_{}", Uuid::new_v4().as_simple());
-    let user = make_user(&username);
-
-    store.create_user(&user).await.unwrap();
+    let user = create_test_user(&store, &username).await;
 
     let fetched = store.get_user_by_username(&username).await.unwrap().unwrap();
     assert_eq!(fetched.id, user.id);
