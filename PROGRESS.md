@@ -151,7 +151,7 @@ test_returns_dict_structure ✅
 - [ ] 图片上传 + AI 标签提取集成
 - [ ] Web3 存证端到端打通
 - [ ] 移动端 H5
-- [ ] 性能优化（索引、缓存）
+- [x] 性能优化（索引、缓存）
 
 ---
 
@@ -209,6 +209,8 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 | 匹配通知 | ✅ | match_found 事件 |
 | 确认通知 | ✅ | swap_confirmed 事件 |
 | AppState 重构 | ✅ | 移至 lib.rs 全局共享 |
+| 数据库索引 | ✅ | GIN 索引 + 复合索引，覆盖所有查询路径 |
+| 外键约束 | ✅ | demands/items → users 级联删除 |
 
 ---
 
