@@ -111,7 +111,7 @@ async fn register(app: Router, username: &str) -> (Router, Value) {
 // ---- E2E: Full swap flow ----
 
 #[tokio::test]
-#[ignore] // requires clean database - run with: cargo test --test e2e_test -- --ignored
+#[ignore] // requires isolated database - run with: cargo test --test e2e_test -- --ignored
 async fn e2e_full_swap_flow() {
     let pool = setup_pool().await;
     let app = build_router(pool);
@@ -190,12 +190,24 @@ async fn e2e_full_swap_flow() {
         "should find at least one cycle"
     );
 
-    // 7. List cycles and confirm the first one
+    // 7. List cycles and confirm the one containing our items
     let (app, status, cycle_list) = get_json(app, "/api/cycles").await;
     assert_eq!(status, StatusCode::OK);
-    assert!(!cycle_list.as_array().unwrap().is_empty());
 
-    let cycle_id = cycle_list[0]["id"].as_str().unwrap();
+    let cycle = cycle_list
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|c| {
+            c["swaps"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|s| s["offer_item_id"].as_str() == Some(&item_a_id.to_string()))
+        })
+        .expect("should find cycle containing our items");
+
+    let cycle_id = cycle["id"].as_str().unwrap();
     let (app, status, confirm_resp) =
         post_json(app, &format!("/api/cycles/{cycle_id}/confirm"), json!({})).await;
     assert_eq!(status, StatusCode::OK);
@@ -323,28 +335,48 @@ async fn e2e_item_status_transitions() {
 // ---- E2E: No cycle found ----
 
 #[tokio::test]
-#[ignore] // requires clean database - run with: cargo test --test e2e_test -- --ignored
+#[ignore] // requires isolated database - run with: cargo test --test e2e_test -- --ignored
 async fn e2e_no_cycle_found() {
     let pool = setup_pool().await;
     let app = build_router(pool);
-    let (app, user) = register(app, &format!("nocycle_{}", Uuid::new_v4().as_simple())).await;
+    let prefix = Uuid::new_v4().as_simple().to_string();
+    let (app, user) = register(app, &format!("nocycle_{prefix}")).await;
     let user_id: Uuid = serde_json::from_value(user["user_id"].clone()).unwrap();
 
+    // Use a unique tag that won't match any existing demands
+    let unique_tag = format!("unique_nocycle_{prefix}");
     let (app, _, item) = post_json(
         app,
         "/api/items",
         json!({
             "owner_id": user_id,
             "title": "独物品",
-            "tags": ["稀有"],
+            "tags": [unique_tag],
             "value_tier": 5
         }),
     )
     .await;
     let item_id: Uuid = serde_json::from_value(item["id"].clone()).unwrap();
 
+    // Create a demand for this item but with a target that nobody offers
+    let unique_target = format!("unique_target_{prefix}");
+    let (app, _, _) = post_json(
+        app,
+        "/api/demands",
+        json!({
+            "user_id": user_id,
+            "offer_item_id": item_id,
+            "offer_tags": [unique_tag],
+            "target_tags": [unique_target]
+        }),
+    )
+    .await;
+
     let (_, status, cycles) =
         post_json(app, &format!("/api/items/{item_id}/match"), json!({})).await;
     assert_eq!(status, StatusCode::OK);
-    assert!(cycles.as_array().unwrap().is_empty());
+    assert!(
+        cycles.as_array().unwrap().is_empty(),
+        "should not find any cycle with unique tags"
+    );
 }
