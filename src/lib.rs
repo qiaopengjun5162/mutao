@@ -1,6 +1,7 @@
 pub mod auth;
 pub mod blockchain;
 pub mod error;
+pub mod handlers;
 pub mod matcher;
 pub mod models;
 pub mod store;
