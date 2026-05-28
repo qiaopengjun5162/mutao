@@ -79,7 +79,7 @@ jobs:
         uses: taiki-e/install-action@nextest
 
       - name: 安装 cargo-llvm-cov
-        uses: taiki-e/install-action@llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: 初始化测试数据库
         env:
