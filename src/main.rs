@@ -1,7 +1,10 @@
 use axum::{Router, routing::get, routing::post};
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
+use mutao::api_doc::ApiDoc;
 use mutao::blockchain::ChainManager;
 use mutao::blockchain::ethereum::{EthereumAdapter, EthereumConfig};
 use mutao::handlers::{SharedState, ai, auth_handler, blockchain_handler, cycles, demands, items};
@@ -43,6 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let app = Router::new()
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .route("/api/auth/register", post(auth_handler::register))
         .route("/api/auth/login", post(auth_handler::login))
         .route(

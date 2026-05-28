@@ -1,5 +1,6 @@
 use axum::{extract::State, response::Json};
 use serde::Deserialize;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::error::AppError;
@@ -11,7 +12,7 @@ pub async fn health() -> Json<serde_json::Value> {
     Json(serde_json::json!({"status":"ok","name":"木桃 Mutao"}))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct CreateItemReq {
     pub owner_id: Uuid,
     pub title: String,
@@ -63,7 +64,7 @@ pub async fn list_items(State(s): State<SharedState>) -> Result<Json<Vec<Item>>,
     Ok(Json(s.store.list_items().await?))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct UpdateStatusReq {
     pub status: ItemStatus,
 }

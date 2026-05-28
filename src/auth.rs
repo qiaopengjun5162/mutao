@@ -6,6 +6,7 @@ use axum::{
 };
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 /// JWT 密钥，优先从环境变量读取，兜底用内置值（生产环境必须设置 JWT_SECRET）
@@ -20,20 +21,20 @@ fn jwt_secret() -> &'static [u8] {
         .as_slice()
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct Claims {
     pub sub: Uuid,
     pub username: String,
     pub exp: usize,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct LoginReq {
     pub username: String,
     pub password: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct LoginRes {
     pub token: String,
     pub user_id: Uuid,

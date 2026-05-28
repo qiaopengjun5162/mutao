@@ -1,9 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 /// 物品状态
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, ToSchema)]
 pub enum ItemStatus {
     Idle,
     Matching,
@@ -36,7 +37,7 @@ impl ItemStatus {
 }
 
 /// 核心实体：闲置物品
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct Item {
     pub id: Uuid,
     pub owner_id: Uuid,
@@ -50,7 +51,7 @@ pub struct Item {
 }
 
 /// 交换意向：我想用我的 A，换别人手里什么样的 B
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct Demand {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -61,7 +62,7 @@ pub struct Demand {
 }
 
 /// 交换环：A 换 B, B 换 C, C 换 A
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct SwapCycle {
     pub id: Uuid,
     pub swaps: Vec<SwapLeg>,
@@ -69,7 +70,7 @@ pub struct SwapCycle {
 }
 
 /// 一对一的交换腿
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct SwapLeg {
     pub from_user_id: Uuid,
     pub to_user_id: Uuid,
@@ -90,7 +91,7 @@ impl SwapCycle {
 }
 
 /// 用户
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct User {
     pub id: Uuid,
     pub username: String,

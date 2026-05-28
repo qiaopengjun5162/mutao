@@ -1,5 +1,6 @@
 use axum::{extract::State, response::Json};
 use serde::Deserialize;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::error::AppError;
@@ -7,7 +8,7 @@ use crate::models::Demand;
 
 use super::SharedState;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct CreateDemandReq {
     pub user_id: Uuid,
     pub offer_item_id: Uuid,

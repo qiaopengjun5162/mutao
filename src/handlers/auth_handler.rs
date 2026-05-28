@@ -1,5 +1,6 @@
 use axum::{extract::State, response::Json};
 use serde::Deserialize;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::auth;
@@ -8,7 +9,7 @@ use crate::models::User;
 
 use super::SharedState;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, ToSchema)]
 pub struct RegisterReq {
     pub username: String,
     pub password: String,

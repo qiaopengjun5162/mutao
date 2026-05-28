@@ -1,3 +1,4 @@
+pub mod api_doc;
 pub mod auth;
 pub mod blockchain;
 pub mod error;
