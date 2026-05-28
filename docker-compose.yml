@@ -21,7 +21,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       DATABASE_URL: postgres://mutao:mutao@db:5432/mutao
       JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
