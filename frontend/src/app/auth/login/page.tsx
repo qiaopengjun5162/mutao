@@ -3,74 +3,69 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { useAuth } from "@/hooks/use-auth";
+import { login as apiLogin } from "@/lib/api";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [form, setForm] = useState({ username: "", password: "" });
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     try {
-      const res = await api.login(form);
-      localStorage.setItem("token", res.token);
-      localStorage.setItem("user", JSON.stringify(res));
+      const res = await apiLogin({ username, password });
+      login(res.token, res.user_id, res.username);
       router.push("/items");
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "登录失败");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "登录失败");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-8">
-      <div className="w-full max-w-sm border rounded-lg p-6">
-        <h1 className="text-2xl font-bold text-center mb-6">登录</h1>
-
+    <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-4">
+      <div className="w-full max-w-sm">
+        <h1 className="text-2xl font-bold text-center mb-8 text-white">登录</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">用户名</label>
             <input
-              className="w-full border rounded-md px-3 py-2 bg-background"
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
-              placeholder="输入用户名"
-              autoComplete="username"
+              type="text"
+              placeholder="用户名"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition-colors"
+              required
             />
           </div>
-
           <div>
-            <label className="block text-sm font-medium mb-1">密码</label>
             <input
               type="password"
-              className="w-full border rounded-md px-3 py-2 bg-background"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              placeholder="输入密码"
-              autoComplete="current-password"
+              placeholder="密码"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition-colors"
+              required
             />
           </div>
-
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-
+          {error && <p className="text-red-400 text-sm">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-4 py-2 disabled:opacity-50"
+            className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-black font-medium rounded-lg transition-colors disabled:opacity-50"
           >
             {loading ? "登录中..." : "登录"}
           </button>
         </form>
-
-        <p className="text-center text-sm text-muted-foreground mt-4">
+        <p className="text-center text-gray-500 text-sm mt-6">
           没有账号？{" "}
-          <Link href="/auth/register" className="text-primary hover:underline">
+          <Link href="/auth/register" className="text-amber-400 hover:text-amber-300">
             注册
           </Link>
         </p>
