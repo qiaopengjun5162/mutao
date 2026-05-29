@@ -35,57 +35,56 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="grid-bg scanline min-h-[calc(100vh-3.5rem)] flex items-center justify-center p-4">
-      <div className="w-full max-w-sm relative">
-        {/* Terminal header */}
-        <div className="flex items-center gap-2 mb-4 text-xs font-mono text-slate-500">
-          <span className="text-orange/50">{">"}</span>
+    <div className="bg-slate-950 min-h-[calc(100vh-3.5rem)] bg-cyber-grid animate-scanline flex items-center justify-center p-4">
+      <div className="w-full max-w-sm relative z-10">
+        <div className="flex items-center gap-2 mb-4 text-[10px] font-mono text-amber-500/40">
+          <span className="text-amber-400">{">"}</span>
           <span>AUTH_MODULE::REGISTER</span>
+          <span className="text-amber-500/20">| 0xff99...0x00</span>
         </div>
 
-        {/* Card */}
-        <div className="relative bg-slate-900/50 border border-orange/10 clip-cyber p-8">
-          {/* Corner decorations */}
-          <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-orange/40" />
-          <div className="absolute top-0 right-0 w-3 h-3 border-t border-r border-orange/40" />
-          <div className="absolute bottom-0 left-0 w-3 h-3 border-b border-l border-orange/40" />
-          <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-orange/40" />
+        <div className="relative bg-slate-900/50 border border-amber-500/10 clip-mech-panel p-8">
+          {/* Corner crosses */}
+          <div className="absolute top-1 left-1 text-amber-500/20 text-xs">+</div>
+          <div className="absolute top-1 right-1 text-amber-500/20 text-xs">+</div>
+          <div className="absolute bottom-1 left-1 text-amber-500/20 text-xs">+</div>
+          <div className="absolute bottom-1 right-1 text-amber-500/20 text-xs">+</div>
 
-          <h1 className="text-xl font-mono font-bold text-center mb-8 text-orange tracking-wider">
+          <h1 className="text-xl font-mono font-bold text-center mb-8 text-amber-400 tracking-wider glow-text-orange">
             用户注册
           </h1>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="text-xs font-mono text-slate-500 mb-1 block">USERNAME</label>
+              <label className="text-[10px] font-mono text-slate-500 mb-1.5 block tracking-wider">USERNAME</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-950/50 border border-slate-700 focus:border-orange/50 text-white font-mono text-sm rounded-none outline-none transition-colors placeholder:text-slate-600"
+                className="w-full px-4 py-3 bg-slate-950/80 border border-slate-700/50 focus:border-amber-500/50 text-white font-mono text-sm outline-none transition-colors placeholder:text-slate-600 clip-mech-btn"
                 placeholder="输入用户名"
                 required
               />
             </div>
             <div>
-              <label className="text-xs font-mono text-slate-500 mb-1 block">PASSWORD</label>
+              <label className="text-[10px] font-mono text-slate-500 mb-1.5 block tracking-wider">PASSWORD</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-950/50 border border-slate-700 focus:border-orange/50 text-white font-mono text-sm rounded-none outline-none transition-colors placeholder:text-slate-600"
+                className="w-full px-4 py-3 bg-slate-950/80 border border-slate-700/50 focus:border-amber-500/50 text-white font-mono text-sm outline-none transition-colors placeholder:text-slate-600 clip-mech-btn"
                 placeholder="输入密码 (6+ 字符)"
                 required
                 minLength={6}
               />
             </div>
             <div>
-              <label className="text-xs font-mono text-slate-500 mb-1 block">CONFIRM</label>
+              <label className="text-[10px] font-mono text-slate-500 mb-1.5 block tracking-wider">CONFIRM</label>
               <input
                 type="password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-950/50 border border-slate-700 focus:border-orange/50 text-white font-mono text-sm rounded-none outline-none transition-colors placeholder:text-slate-600"
+                className="w-full px-4 py-3 bg-slate-950/80 border border-slate-700/50 focus:border-amber-500/50 text-white font-mono text-sm outline-none transition-colors placeholder:text-slate-600 clip-mech-btn"
                 placeholder="确认密码"
                 required
                 minLength={6}
@@ -93,31 +92,30 @@ export default function RegisterPage() {
             </div>
             {error && (
               <div className="flex items-center gap-2 text-red-400 text-xs font-mono">
-                <span className="text-red-500">!</span> {error}
+                <span className="text-red-500">[ERR]</span> {error}
               </div>
             )}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-orange text-slate-950 font-mono font-bold text-sm tracking-wider clip-cyber-sm glow-orange transition-all duration-300 disabled:opacity-50 btn-flow relative overflow-hidden"
+              className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 font-mono font-bold text-sm tracking-wider clip-mech-btn glow-orange transition-all duration-300 disabled:opacity-50 btn-flow"
             >
-              {loading ? "CREATING..." : "REGISTER"}
+              {loading ? "[CREATING...]" : "[REGISTER]"}
             </button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-slate-800">
+          <div className="mt-6 pt-4 border-t border-slate-800/50">
             <p className="text-center text-slate-500 text-xs font-mono">
               HAS ACCOUNT?{" "}
-              <Link href="/auth/login" className="text-orange hover:text-orange/80 transition-colors">
+              <Link href="/auth/login" className="text-cyan-400 hover:text-cyan-300 transition-colors">
                 LOGIN
               </Link>
             </p>
           </div>
         </div>
 
-        {/* Bottom decoration */}
-        <div className="mt-4 text-center text-xs font-mono text-slate-600">
-          {"// identity.verify | blockchain.attest"}
+        <div className="mt-4 text-center text-[10px] font-mono text-slate-600">
+          {"// identity.verify | blockchain.attest | keccak256"}
         </div>
       </div>
     </div>
