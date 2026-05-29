@@ -35,57 +35,90 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-center mb-8 text-white">注册</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="text"
-              placeholder="用户名"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition-colors"
-              required
-            />
+    <div className="grid-bg scanline min-h-[calc(100vh-3.5rem)] flex items-center justify-center p-4">
+      <div className="w-full max-w-sm relative">
+        {/* Terminal header */}
+        <div className="flex items-center gap-2 mb-4 text-xs font-mono text-slate-500">
+          <span className="text-orange/50">{">"}</span>
+          <span>AUTH_MODULE::REGISTER</span>
+        </div>
+
+        {/* Card */}
+        <div className="relative bg-slate-900/50 border border-orange/10 clip-cyber p-8">
+          {/* Corner decorations */}
+          <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-orange/40" />
+          <div className="absolute top-0 right-0 w-3 h-3 border-t border-r border-orange/40" />
+          <div className="absolute bottom-0 left-0 w-3 h-3 border-b border-l border-orange/40" />
+          <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-orange/40" />
+
+          <h1 className="text-xl font-mono font-bold text-center mb-8 text-orange tracking-wider">
+            用户注册
+          </h1>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-xs font-mono text-slate-500 mb-1 block">USERNAME</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-950/50 border border-slate-700 focus:border-orange/50 text-white font-mono text-sm rounded-none outline-none transition-colors placeholder:text-slate-600"
+                placeholder="输入用户名"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-xs font-mono text-slate-500 mb-1 block">PASSWORD</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-950/50 border border-slate-700 focus:border-orange/50 text-white font-mono text-sm rounded-none outline-none transition-colors placeholder:text-slate-600"
+                placeholder="输入密码 (6+ 字符)"
+                required
+                minLength={6}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-mono text-slate-500 mb-1 block">CONFIRM</label>
+              <input
+                type="password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-950/50 border border-slate-700 focus:border-orange/50 text-white font-mono text-sm rounded-none outline-none transition-colors placeholder:text-slate-600"
+                placeholder="确认密码"
+                required
+                minLength={6}
+              />
+            </div>
+            {error && (
+              <div className="flex items-center gap-2 text-red-400 text-xs font-mono">
+                <span className="text-red-500">!</span> {error}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-orange text-slate-950 font-mono font-bold text-sm tracking-wider clip-cyber-sm glow-orange transition-all duration-300 disabled:opacity-50 btn-flow relative overflow-hidden"
+            >
+              {loading ? "CREATING..." : "REGISTER"}
+            </button>
+          </form>
+
+          <div className="mt-6 pt-4 border-t border-slate-800">
+            <p className="text-center text-slate-500 text-xs font-mono">
+              HAS ACCOUNT?{" "}
+              <Link href="/auth/login" className="text-orange hover:text-orange/80 transition-colors">
+                LOGIN
+              </Link>
+            </p>
           </div>
-          <div>
-            <input
-              type="password"
-              placeholder="密码"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition-colors"
-              required
-              minLength={6}
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              placeholder="确认密码"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition-colors"
-              required
-              minLength={6}
-            />
-          </div>
-          {error && <p className="text-red-400 text-sm">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-black font-medium rounded-lg transition-colors disabled:opacity-50"
-          >
-            {loading ? "注册中..." : "注册"}
-          </button>
-        </form>
-        <p className="text-center text-gray-500 text-sm mt-6">
-          已有账号？{" "}
-          <Link href="/auth/login" className="text-amber-400 hover:text-amber-300">
-            登录
-          </Link>
-        </p>
+        </div>
+
+        {/* Bottom decoration */}
+        <div className="mt-4 text-center text-xs font-mono text-slate-600">
+          {"// identity.verify | blockchain.attest"}
+        </div>
       </div>
     </div>
   );
