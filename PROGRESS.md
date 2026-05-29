@@ -269,6 +269,13 @@ cargo llvm-cov nextest --html  # 生成 HTML 报告
 | sqlx migrate feature | ✅ | 添加 `migrate` feature 支持自动迁移 |
 | 测试数量 | ✅ | 64 个 Rust 测试全部通过，0 个忽略 |
 
+### 2026-05-29 Phase 13 - 文档注释
+
+| 任务 | 状态 | 说明 |
+|------|------|------|
+| store.rs 文档 | ✅ | 13 个公共方法添加中文 `///` 注释 |
+| matcher.rs 文档 | ✅ | `Matcher` 结构体添加文档注释 |
+
 ### 2026-05-28 Phase 10 - 图片上传
 
 | 任务 | 状态 | 说明 |
