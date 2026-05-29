@@ -9,10 +9,12 @@ pub struct Store {
 }
 
 impl Store {
+    /// 创建 Store 实例
     pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 
+    /// 插入新物品到数据库
     pub async fn create_item(&self, item: &Item) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"INSERT INTO items (id, owner_id, title, description, image_url, tags, value_tier, status, created_at)
@@ -32,6 +34,7 @@ impl Store {
         Ok(())
     }
 
+    /// 根据 ID 查询物品，不存在返回 None
     pub async fn get_item(&self, id: Uuid) -> Result<Option<Item>, sqlx::Error> {
         let row = sqlx::query_as::<_, ItemRow>(
             r#"SELECT id, owner_id, title, description, image_url, tags, value_tier, status, created_at
@@ -43,6 +46,7 @@ impl Store {
         Ok(row.map(|r| r.into_item()))
     }
 
+    /// 列出所有物品，按创建时间倒序
     pub async fn list_items(&self) -> Result<Vec<Item>, sqlx::Error> {
         let rows = sqlx::query_as::<_, ItemRow>(
             r#"SELECT id, owner_id, title, description, image_url, tags, value_tier, status, created_at
@@ -53,6 +57,7 @@ impl Store {
         Ok(rows.into_iter().map(|r| r.into_item()).collect())
     }
 
+    /// 创建交换意向
     pub async fn create_demand(&self, demand: &Demand) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"INSERT INTO demands (id, user_id, offer_item_id, offer_tags, target_tags, created_at)
@@ -69,6 +74,7 @@ impl Store {
         Ok(())
     }
 
+    /// 列出所有交换意向，按创建时间倒序
     pub async fn list_demands(&self) -> Result<Vec<Demand>, sqlx::Error> {
         let rows = sqlx::query_as::<_, DemandRow>(
             r#"SELECT id, user_id, offer_item_id, offer_tags, target_tags, created_at
@@ -79,6 +85,7 @@ impl Store {
         Ok(rows.into_iter().map(|r| r.into_demand()).collect())
     }
 
+    /// 保存匹配到的交换环
     pub async fn save_cycle(&self, cycle: &SwapCycle) -> Result<(), sqlx::Error> {
         let data = serde_json::to_value(cycle).map_err(sqlx::Error::decode)?;
         sqlx::query("INSERT INTO swap_cycles (id, data, created_at) VALUES ($1, $2, $3)")
@@ -90,6 +97,7 @@ impl Store {
         Ok(())
     }
 
+    /// 列出所有交换环，按创建时间倒序
     pub async fn list_cycles(&self) -> Result<Vec<SwapCycle>, sqlx::Error> {
         let rows = sqlx::query_as::<_, CycleRow>(
             r#"SELECT id, data, created_at FROM swap_cycles ORDER BY created_at DESC"#,
@@ -115,6 +123,7 @@ impl Store {
         Ok(cycles)
     }
 
+    /// 检查物品是否存在
     pub async fn item_exists(&self, id: Uuid) -> Result<bool, sqlx::Error> {
         let exists =
             sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM items WHERE id = $1)")
@@ -124,6 +133,7 @@ impl Store {
         Ok(exists)
     }
 
+    /// 更新物品图片 URL
     pub async fn update_item_image(&self, id: Uuid, image_url: &str) -> Result<bool, sqlx::Error> {
         let result = sqlx::query("UPDATE items SET image_url = $1 WHERE id = $2")
             .bind(image_url)
@@ -133,6 +143,7 @@ impl Store {
         Ok(result.rows_affected() > 0)
     }
 
+    /// 更新物品状态
     pub async fn update_item_status(
         &self,
         id: Uuid,
@@ -148,6 +159,7 @@ impl Store {
 
     // ---- User ----
 
+    /// 创建新用户
     pub async fn create_user(&self, user: &User) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"INSERT INTO users (id, username, password_hash, created_at)
@@ -162,6 +174,7 @@ impl Store {
         Ok(())
     }
 
+    /// 根据用户名查询用户
     pub async fn get_user_by_username(&self, username: &str) -> Result<Option<User>, sqlx::Error> {
         let row = sqlx::query_as::<_, UserRow>(
             r#"SELECT id, username, password_hash, created_at FROM users WHERE username = $1"#,

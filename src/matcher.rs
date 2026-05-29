@@ -2,6 +2,7 @@ use crate::models::{Demand, SwapCycle, SwapLeg};
 use std::collections::HashSet;
 use uuid::Uuid;
 
+/// 交换环匹配引擎，使用 DFS 在有向图中搜索长度 2~max 的交换环
 pub struct Matcher;
 
 impl Matcher {
