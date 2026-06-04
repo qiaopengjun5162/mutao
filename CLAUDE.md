@@ -255,11 +255,21 @@ just db-schema                # 查看表结构
 - README 中英文互链
 - commit message 改用英语（已记录偏好）
 
-### 当前状态（2026-05-29）
-- Rust 测试：64 个全部通过
+### Phase 12 - P0 鉴权加固（2026-06-04）
+- 挂载 JWT 中间件：拆分 public/protected 路由，写操作（创建物品/意向、改状态、匹配、上传、存证、确认交换）需 Bearer token，缺失/无效返回 401
+- WebSocket /api/ws 通过 `?token=` 查询参数鉴权（浏览器无法为 WS 设 header）
+- 弱密钥兜底修复：`APP_ENV=production` 时启动强校验 `JWT_SECRET` 存在且 ≥32 字节，否则拒绝启动；非生产缺失则告警 + 内置默认（见 `auth::ensure_secret_for_env`）
+- owner 越权防护：owner 一律取 JWT `Claims.sub`；改状态/匹配/上传/存证校验物主，confirm 校验交换环参与者，越权返回 403（新增 `AppError::Forbidden`）
+- **破坏性变更**：`CreateItemReq` 移除 `owner_id`、`CreateDemandReq` 移除 `user_id`（改由 token 推导）
+- 前端：api.ts 自动附加 `Authorization`、WS 带 token；修复 login/register 页导入；Button 支持 `asChild`
+- 测试：handler/e2e 改为带 token 调用，新增 401/403 用例
+- 注意：本环境 github 不可达，`utoipa-swagger-ui` build script 需联网下载 → 跑测试用 `cargo nextest run --lib --tests`（跳过 bin）
+
+### 当前状态（2026-06-04）
+- Rust 测试：74 个全部通过
 - Python 测试：10 个全部通过
 - 前端路由：9 个
-- API 端点：17 个（含图片上传）
+- API 端点：写操作已挂 JWT 鉴权（401），越权 403；读/认证/健康/文档公开
 - Docker 部署：已验证可用（localhost:3001）
 - Swagger UI：/swagger-ui 可用
 - 所有 P0/P1/P2 功能已完成
