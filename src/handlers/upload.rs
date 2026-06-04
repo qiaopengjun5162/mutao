@@ -1,7 +1,9 @@
+use axum::Extension;
 use axum::extract::{Multipart, Path};
 use axum::response::Json;
 use uuid::Uuid;
 
+use crate::auth::Claims;
 use crate::error::AppError;
 
 use super::SharedState;
@@ -12,10 +14,13 @@ const UPLOAD_DIR: &str = "uploads";
 pub async fn upload_image(
     axum::extract::State(s): axum::extract::State<SharedState>,
     Path(item_id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    if !s.store.item_exists(item_id).await? {
-        return Err(AppError::NotFound);
+    let item = s.store.get_item(item_id).await?.ok_or(AppError::NotFound)?;
+
+    if item.owner_id != claims.sub {
+        return Err(AppError::Forbidden("无权为他人物品上传图片".into()));
     }
 
     let field = multipart

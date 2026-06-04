@@ -1,8 +1,9 @@
-use axum::{extract::State, response::Json};
+use axum::{Extension, extract::State, response::Json};
 use serde::Deserialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::auth::Claims;
 use crate::error::AppError;
 use crate::models::Demand;
 
@@ -10,7 +11,6 @@ use super::SharedState;
 
 #[derive(Deserialize, ToSchema)]
 pub struct CreateDemandReq {
-    pub user_id: Uuid,
     pub offer_item_id: Uuid,
     pub offer_tags: Vec<String>,
     pub target_tags: Vec<String>,
@@ -18,6 +18,7 @@ pub struct CreateDemandReq {
 
 pub async fn create_demand(
     State(s): State<SharedState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDemandReq>,
 ) -> Result<Json<Demand>, AppError> {
     if req.offer_tags.is_empty() {
@@ -29,7 +30,7 @@ pub async fn create_demand(
 
     let demand = Demand {
         id: Uuid::new_v4(),
-        user_id: req.user_id,
+        user_id: claims.sub,
         offer_item_id: req.offer_item_id,
         offer_tags: req.offer_tags,
         target_tags: req.target_tags,

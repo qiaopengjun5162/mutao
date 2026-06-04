@@ -1,7 +1,9 @@
+use axum::Extension;
 use axum::{extract::State, response::Json};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::auth::Claims;
 use crate::blockchain::{ChainType, SwapProof};
 use crate::error::AppError;
 
@@ -18,9 +20,14 @@ pub struct AttestReq {
 pub async fn attest_item(
     State(s): State<SharedState>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<AttestReq>,
 ) -> Result<Json<serde_json::Value>, AppError> {
     let item = s.store.get_item(id).await?.ok_or(AppError::NotFound)?;
+
+    if item.owner_id != claims.sub {
+        return Err(AppError::Forbidden("无权为他人物品存证".into()));
+    }
 
     let proof = SwapProof {
         item_id: id.to_string(),

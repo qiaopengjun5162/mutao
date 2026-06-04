@@ -1,6 +1,7 @@
-use axum::{extract::State, response::Json};
+use axum::{Extension, extract::State, response::Json};
 use uuid::Uuid;
 
+use crate::auth::Claims;
 use crate::error::AppError;
 use crate::matcher;
 use crate::models::{ItemStatus, SwapCycle};
@@ -11,9 +12,12 @@ use super::SharedState;
 pub async fn match_item(
     State(s): State<SharedState>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
+    Extension(claims): Extension<Claims>,
 ) -> Result<Json<Vec<SwapCycle>>, AppError> {
-    if !s.store.item_exists(id).await? {
-        return Err(AppError::NotFound);
+    let item = s.store.get_item(id).await?.ok_or(AppError::NotFound)?;
+
+    if item.owner_id != claims.sub {
+        return Err(AppError::Forbidden("无权为他人物品发起匹配".into()));
     }
 
     let demands = s.store.list_demands().await?;
@@ -48,9 +52,14 @@ pub async fn list_cycles(State(s): State<SharedState>) -> Result<Json<Vec<SwapCy
 pub async fn confirm_swap(
     State(s): State<SharedState>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
+    Extension(claims): Extension<Claims>,
 ) -> Result<Json<serde_json::Value>, AppError> {
     let cycles = s.store.list_cycles().await?;
     let cycle = cycles.iter().find(|c| c.id == id).ok_or(AppError::NotFound)?;
+
+    if !cycle.swaps.iter().any(|leg| leg.from_user_id == claims.sub) {
+        return Err(AppError::Forbidden("只有交换环参与者可以确认".into()));
+    }
 
     for leg in &cycle.swaps {
         s.store.update_item_status(leg.offer_item_id, &ItemStatus::Completed).await.ok();

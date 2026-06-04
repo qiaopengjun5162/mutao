@@ -12,6 +12,9 @@ pub enum AppError {
     #[error("{0}")]
     BadRequest(String),
 
+    #[error("{0}")]
+    Forbidden(String),
+
     #[error("服务器内部错误")]
     Internal(#[from] sqlx::Error),
 
@@ -27,6 +30,7 @@ impl IntoResponse for AppError {
         let (status, message) = match &self {
             AppError::NotFound => (StatusCode::NOT_FOUND, self.to_string()),
             AppError::BadRequest(_) => (StatusCode::BAD_REQUEST, self.to_string()),
+            AppError::Forbidden(_) => (StatusCode::FORBIDDEN, self.to_string()),
             // 内部错误不暴露细节给客户端，只记日志
             AppError::Internal(_) | AppError::InternalMsg(_) | AppError::Serialization(_) => {
                 tracing::error!("内部错误: {self}");
@@ -63,6 +67,15 @@ mod tests {
         let body = to_bytes(resp.into_body(), usize::MAX).await.unwrap();
         let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
         assert_eq!(json["error"], "title 不能为空");
+    }
+
+    #[tokio::test]
+    async fn test_forbidden_returns_403() {
+        let resp = AppError::Forbidden("无权操作该物品".into()).into_response();
+        assert_eq!(resp.status(), StatusCode::FORBIDDEN);
+        let body = to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+        let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(json["error"], "无权操作该物品");
     }
 
     #[tokio::test]

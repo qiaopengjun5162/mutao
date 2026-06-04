@@ -1,12 +1,14 @@
 use axum::body::Body;
 use axum::http::{Request, StatusCode, header};
-use axum::{Router, routing::get, routing::post};
+use axum::routing::{get, patch, post};
+use axum::{Router, middleware};
 use serde_json::{Value, json};
 use sqlx::PgPool;
 use std::sync::Arc;
 use tower::util::ServiceExt;
 use uuid::Uuid;
 
+use mutao::auth;
 use mutao::blockchain::ChainManager;
 use mutao::handlers::{SharedState, auth_handler, cycles, demands, items};
 use mutao::store::Store;
@@ -19,27 +21,24 @@ fn build_router(pool: PgPool) -> Router {
         chain_manager: ChainManager::new(),
     });
 
-    Router::new()
+    let protected = Router::new()
+        .route("/api/items", post(items::create_item))
+        .route("/api/items/:id/match", post(cycles::match_item))
+        .route("/api/items/:id/status", patch(items::update_item_status))
+        .route("/api/cycles/:id/confirm", post(cycles::confirm_swap))
+        .route("/api/demands", post(demands::create_demand))
+        .route_layer(middleware::from_fn(auth::auth_middleware));
+
+    let public = Router::new()
         .route("/api/auth/register", post(auth_handler::register))
         .route("/api/auth/login", post(auth_handler::login))
-        .route(
-            "/api/items",
-            post(items::create_item).get(items::list_items),
-        )
+        .route("/api/items", get(items::list_items))
         .route("/api/items/:id", get(items::get_item))
-        .route("/api/items/:id/match", post(cycles::match_item))
-        .route(
-            "/api/items/:id/status",
-            axum::routing::patch(items::update_item_status),
-        )
-        .route("/api/cycles/:id/confirm", post(cycles::confirm_swap))
-        .route(
-            "/api/demands",
-            post(demands::create_demand).get(demands::list_demands),
-        )
+        .route("/api/demands", get(demands::list_demands))
         .route("/api/cycles", get(cycles::list_cycles))
-        .route("/api/health", get(items::health))
-        .with_state(state)
+        .route("/api/health", get(items::health));
+
+    public.merge(protected).with_state(state)
 }
 
 async fn post_json(app: Router, uri: &str, body: Value) -> (Router, StatusCode, Value) {
@@ -57,18 +56,24 @@ async fn post_json(app: Router, uri: &str, body: Value) -> (Router, StatusCode, 
         .unwrap();
     let status = resp.status();
     let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
-    let json: Value = serde_json::from_slice(&bytes).unwrap();
+    let json = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
     (app, status, json)
 }
 
-async fn patch_json(app: Router, uri: &str, body: Value) -> (Router, StatusCode, Value) {
+async fn post_auth(
+    app: Router,
+    uri: &str,
+    token: &str,
+    body: Value,
+) -> (Router, StatusCode, Value) {
     let resp = app
         .clone()
         .oneshot(
             Request::builder()
-                .method("PATCH")
+                .method("POST")
                 .uri(uri)
                 .header(header::CONTENT_TYPE, "application/json")
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
                 .body(Body::from(body.to_string()))
                 .unwrap(),
         )
@@ -76,7 +81,32 @@ async fn patch_json(app: Router, uri: &str, body: Value) -> (Router, StatusCode,
         .unwrap();
     let status = resp.status();
     let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
-    let json: Value = serde_json::from_slice(&bytes).unwrap();
+    let json = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
+    (app, status, json)
+}
+
+async fn patch_auth(
+    app: Router,
+    uri: &str,
+    token: &str,
+    body: Value,
+) -> (Router, StatusCode, Value) {
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("PATCH")
+                .uri(uri)
+                .header(header::CONTENT_TYPE, "application/json")
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .body(Body::from(body.to_string()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let status = resp.status();
+    let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
+    let json = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
     (app, status, json)
 }
 
@@ -88,18 +118,21 @@ async fn get_json(app: Router, uri: &str) -> (Router, StatusCode, Value) {
         .unwrap();
     let status = resp.status();
     let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX).await.unwrap();
-    let json: Value = serde_json::from_slice(&bytes).unwrap();
+    let json = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
     (app, status, json)
 }
 
-async fn register(app: Router, username: &str) -> (Router, Value) {
+/// 注册用户，返回 (app, token, user_id)
+async fn register(app: Router, username: &str) -> (Router, String, Uuid) {
     let (app, _, body) = post_json(
         app,
         "/api/auth/register",
         json!({ "username": username, "password": "testpass123" }),
     )
     .await;
-    (app, body)
+    let token = body["token"].as_str().unwrap().to_string();
+    let user_id = serde_json::from_value(body["user_id"].clone()).unwrap();
+    (app, token, user_id)
 }
 
 // ---- E2E: Full swap flow ----
@@ -110,17 +143,15 @@ async fn e2e_full_swap_flow(pool: PgPool) {
     let prefix = Uuid::new_v4().as_simple().to_string();
 
     // 1. Register two users
-    let (app, user_a) = register(app, &format!("alice_{prefix}")).await;
-    let (app, user_b) = register(app, &format!("bob_{prefix}")).await;
-    let user_a_id: Uuid = serde_json::from_value(user_a["user_id"].clone()).unwrap();
-    let user_b_id: Uuid = serde_json::from_value(user_b["user_id"].clone()).unwrap();
+    let (app, token_a, _user_a_id) = register(app, &format!("alice_{prefix}")).await;
+    let (app, token_b, _user_b_id) = register(app, &format!("bob_{prefix}")).await;
 
     // 2. User A creates an item (book)
-    let (app, status, item_a) = post_json(
+    let (app, status, item_a) = post_auth(
         app,
         "/api/items",
+        &token_a,
         json!({
-            "owner_id": user_a_id,
             "title": "Rust 编程之道",
             "tags": ["书籍", "编程"],
             "value_tier": 3
@@ -131,11 +162,11 @@ async fn e2e_full_swap_flow(pool: PgPool) {
     let item_a_id: Uuid = serde_json::from_value(item_a["id"].clone()).unwrap();
 
     // 3. User B creates an item (keyboard)
-    let (app, status, item_b) = post_json(
+    let (app, status, item_b) = post_auth(
         app,
         "/api/items",
+        &token_b,
         json!({
-            "owner_id": user_b_id,
             "title": "机械键盘",
             "tags": ["键盘", "外设"],
             "value_tier": 3
@@ -146,11 +177,11 @@ async fn e2e_full_swap_flow(pool: PgPool) {
     let item_b_id: Uuid = serde_json::from_value(item_b["id"].clone()).unwrap();
 
     // 4. User A wants to trade book for keyboard
-    let (app, status, _) = post_json(
+    let (app, status, _) = post_auth(
         app,
         "/api/demands",
+        &token_a,
         json!({
-            "user_id": user_a_id,
             "offer_item_id": item_a_id,
             "offer_tags": ["书籍"],
             "target_tags": ["键盘"]
@@ -160,11 +191,11 @@ async fn e2e_full_swap_flow(pool: PgPool) {
     assert_eq!(status, StatusCode::OK);
 
     // 5. User B wants to trade keyboard for book
-    let (app, status, _) = post_json(
+    let (app, status, _) = post_auth(
         app,
         "/api/demands",
+        &token_b,
         json!({
-            "user_id": user_b_id,
             "offer_item_id": item_b_id,
             "offer_tags": ["键盘"],
             "target_tags": ["书籍"]
@@ -173,9 +204,14 @@ async fn e2e_full_swap_flow(pool: PgPool) {
     .await;
     assert_eq!(status, StatusCode::OK);
 
-    // 6. Trigger matching on item A
-    let (app, status, cycles) =
-        post_json(app, &format!("/api/items/{item_a_id}/match"), json!({})).await;
+    // 6. Trigger matching on item A (owner = user A)
+    let (app, status, cycles) = post_auth(
+        app,
+        &format!("/api/items/{item_a_id}/match"),
+        &token_a,
+        json!({}),
+    )
+    .await;
     assert_eq!(status, StatusCode::OK);
     assert!(
         !cycles.as_array().unwrap().is_empty(),
@@ -200,8 +236,14 @@ async fn e2e_full_swap_flow(pool: PgPool) {
         .expect("should find cycle containing our items");
 
     let cycle_id = cycle["id"].as_str().unwrap();
-    let (app, status, confirm_resp) =
-        post_json(app, &format!("/api/cycles/{cycle_id}/confirm"), json!({})).await;
+    // User A 是该环参与者，可确认
+    let (app, status, confirm_resp) = post_auth(
+        app,
+        &format!("/api/cycles/{cycle_id}/confirm"),
+        &token_a,
+        json!({}),
+    )
+    .await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(confirm_resp["status"], "confirmed");
 
@@ -213,6 +255,84 @@ async fn e2e_full_swap_flow(pool: PgPool) {
     let (_, status, item_b_final) = get_json(app, &format!("/api/items/{item_b_id}")).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(item_b_final["status"], "Completed");
+}
+
+// ---- E2E: Confirm swap rejects non-participant ----
+
+#[sqlx::test]
+async fn e2e_confirm_swap_forbidden_for_outsider(pool: PgPool) {
+    let app = build_router(pool);
+    let prefix = Uuid::new_v4().as_simple().to_string();
+
+    let (app, token_a, _) = register(app, &format!("pa_{prefix}")).await;
+    let (app, token_b, _) = register(app, &format!("pb_{prefix}")).await;
+    let (app, token_c, _) = register(app, &format!("pc_{prefix}")).await;
+
+    let (app, _, item_a) = post_auth(
+        app,
+        "/api/items",
+        &token_a,
+        json!({ "title": "书", "tags": ["书籍"], "value_tier": 3 }),
+    )
+    .await;
+    let item_a_id: Uuid = serde_json::from_value(item_a["id"].clone()).unwrap();
+
+    let (app, _, item_b) = post_auth(
+        app,
+        "/api/items",
+        &token_b,
+        json!({ "title": "键盘", "tags": ["键盘"], "value_tier": 3 }),
+    )
+    .await;
+    let item_b_id: Uuid = serde_json::from_value(item_b["id"].clone()).unwrap();
+
+    let (app, _, _) = post_auth(
+        app,
+        "/api/demands",
+        &token_a,
+        json!({ "offer_item_id": item_a_id, "offer_tags": ["书籍"], "target_tags": ["键盘"] }),
+    )
+    .await;
+    let (app, _, _) = post_auth(
+        app,
+        "/api/demands",
+        &token_b,
+        json!({ "offer_item_id": item_b_id, "offer_tags": ["键盘"], "target_tags": ["书籍"] }),
+    )
+    .await;
+
+    let (app, _, _) = post_auth(
+        app,
+        &format!("/api/items/{item_a_id}/match"),
+        &token_a,
+        json!({}),
+    )
+    .await;
+
+    let (app, _, cycle_list) = get_json(app, "/api/cycles").await;
+    let cycle = cycle_list
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|c| {
+            c["swaps"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|s| s["offer_item_id"].as_str() == Some(&item_a_id.to_string()))
+        })
+        .expect("cycle should exist");
+    let cycle_id = cycle["id"].as_str().unwrap();
+
+    // User C 不是参与者 → 403
+    let (_, status, _) = post_auth(
+        app,
+        &format!("/api/cycles/{cycle_id}/confirm"),
+        &token_c,
+        json!({}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
 }
 
 // ---- E2E: Duplicate registration ----
@@ -247,7 +367,7 @@ async fn e2e_login_wrong_password(pool: PgPool) {
     let app = build_router(pool);
     let username = format!("wrong_{}", Uuid::new_v4().as_simple());
 
-    let (app, _) = register(app, &username).await;
+    let (app, _, _) = register(app, &username).await;
 
     let (_, status, body) = post_json(
         app,
@@ -264,14 +384,13 @@ async fn e2e_login_wrong_password(pool: PgPool) {
 #[sqlx::test]
 async fn e2e_item_status_transitions(pool: PgPool) {
     let app = build_router(pool);
-    let (app, user) = register(app, &format!("status_{}", Uuid::new_v4().as_simple())).await;
-    let user_id: Uuid = serde_json::from_value(user["user_id"].clone()).unwrap();
+    let (app, token, _) = register(app, &format!("status_{}", Uuid::new_v4().as_simple())).await;
 
-    let (app, _, item) = post_json(
+    let (app, _, item) = post_auth(
         app,
         "/api/items",
+        &token,
         json!({
-            "owner_id": user_id,
             "title": "测试物品",
             "tags": ["测试"],
             "value_tier": 2
@@ -282,9 +401,10 @@ async fn e2e_item_status_transitions(pool: PgPool) {
     assert_eq!(item["status"], "Idle");
 
     // Idle → Matching
-    let (app, status, updated) = patch_json(
+    let (app, status, updated) = patch_auth(
         app,
         &format!("/api/items/{item_id}/status"),
+        &token,
         json!({ "status": "Matching" }),
     )
     .await;
@@ -292,9 +412,10 @@ async fn e2e_item_status_transitions(pool: PgPool) {
     assert_eq!(updated["status"], "Matching");
 
     // Matching → Completed
-    let (app, status, updated) = patch_json(
+    let (app, status, updated) = patch_auth(
         app,
         &format!("/api/items/{item_id}/status"),
+        &token,
         json!({ "status": "Completed" }),
     )
     .await;
@@ -302,9 +423,10 @@ async fn e2e_item_status_transitions(pool: PgPool) {
     assert_eq!(updated["status"], "Completed");
 
     // Completed → Archived
-    let (app, status, updated) = patch_json(
+    let (app, status, updated) = patch_auth(
         app,
         &format!("/api/items/{item_id}/status"),
+        &token,
         json!({ "status": "Archived" }),
     )
     .await;
@@ -312,9 +434,10 @@ async fn e2e_item_status_transitions(pool: PgPool) {
     assert_eq!(updated["status"], "Archived");
 
     // Archived → Idle (should fail)
-    let (_, status, _) = patch_json(
+    let (_, status, _) = patch_auth(
         app,
         &format!("/api/items/{item_id}/status"),
+        &token,
         json!({ "status": "Idle" }),
     )
     .await;
@@ -327,16 +450,15 @@ async fn e2e_item_status_transitions(pool: PgPool) {
 async fn e2e_no_cycle_found(pool: PgPool) {
     let app = build_router(pool);
     let prefix = Uuid::new_v4().as_simple().to_string();
-    let (app, user) = register(app, &format!("nocycle_{prefix}")).await;
-    let user_id: Uuid = serde_json::from_value(user["user_id"].clone()).unwrap();
+    let (app, token, _) = register(app, &format!("nocycle_{prefix}")).await;
 
     // Use a unique tag that won't match any existing demands
     let unique_tag = format!("unique_nocycle_{prefix}");
-    let (app, _, item) = post_json(
+    let (app, _, item) = post_auth(
         app,
         "/api/items",
+        &token,
         json!({
-            "owner_id": user_id,
             "title": "独物品",
             "tags": [unique_tag],
             "value_tier": 5
@@ -347,11 +469,11 @@ async fn e2e_no_cycle_found(pool: PgPool) {
 
     // Create a demand for this item but with a target that nobody offers
     let unique_target = format!("unique_target_{prefix}");
-    let (app, _, _) = post_json(
+    let (app, _, _) = post_auth(
         app,
         "/api/demands",
+        &token,
         json!({
-            "user_id": user_id,
             "offer_item_id": item_id,
             "offer_tags": [unique_tag],
             "target_tags": [unique_target]
@@ -359,8 +481,13 @@ async fn e2e_no_cycle_found(pool: PgPool) {
     )
     .await;
 
-    let (_, status, cycles) =
-        post_json(app, &format!("/api/items/{item_id}/match"), json!({})).await;
+    let (_, status, cycles) = post_auth(
+        app,
+        &format!("/api/items/{item_id}/match"),
+        &token,
+        json!({}),
+    )
+    .await;
     assert_eq!(status, StatusCode::OK);
     assert!(
         cycles.as_array().unwrap().is_empty(),

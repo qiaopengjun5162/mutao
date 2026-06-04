@@ -1,8 +1,9 @@
-use axum::{extract::State, response::Json};
+use axum::{Extension, extract::State, response::Json};
 use serde::Deserialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::auth::Claims;
 use crate::error::AppError;
 use crate::models::{Item, ItemStatus};
 
@@ -14,7 +15,6 @@ pub async fn health() -> Json<serde_json::Value> {
 
 #[derive(Deserialize, ToSchema)]
 pub struct CreateItemReq {
-    pub owner_id: Uuid,
     pub title: String,
     pub description: Option<String>,
     pub image_url: Option<String>,
@@ -24,6 +24,7 @@ pub struct CreateItemReq {
 
 pub async fn create_item(
     State(s): State<SharedState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateItemReq>,
 ) -> Result<Json<Item>, AppError> {
     if req.title.trim().is_empty() {
@@ -38,7 +39,7 @@ pub async fn create_item(
 
     let item = Item {
         id: Uuid::new_v4(),
-        owner_id: req.owner_id,
+        owner_id: claims.sub,
         title: req.title,
         description: req.description.unwrap_or_default(),
         image_url: req.image_url.unwrap_or_default(),
@@ -72,9 +73,14 @@ pub struct UpdateStatusReq {
 pub async fn update_item_status(
     State(s): State<SharedState>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateStatusReq>,
 ) -> Result<Json<Item>, AppError> {
     let item = s.store.get_item(id).await?.ok_or(AppError::NotFound)?;
+
+    if item.owner_id != claims.sub {
+        return Err(AppError::Forbidden("无权修改他人物品".into()));
+    }
 
     if !item.status.can_transition_to(&req.status) {
         return Err(AppError::BadRequest(format!(

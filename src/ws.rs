@@ -1,18 +1,26 @@
 use axum::{
     extract::{
-        State, WebSocketUpgrade,
+        Query, State, WebSocketUpgrade,
         ws::{Message, WebSocket},
     },
-    response::IntoResponse,
+    http::StatusCode,
+    response::{IntoResponse, Response},
 };
 use futures::{SinkExt, StreamExt};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 /// WebSocket 广播消息类型
 #[derive(Debug, Clone, Serialize)]
 pub struct WsNotification {
     pub event: String,
     pub data: serde_json::Value,
+}
+
+/// WebSocket 连接的鉴权参数。浏览器无法为 WS 设置自定义 header，
+/// 因此 token 通过查询字符串 `?token=` 传递。
+#[derive(Deserialize)]
+pub struct WsAuthQuery {
+    pub token: Option<String>,
 }
 
 /// WebSocket hub，持有 broadcast sender 供其它模块发送通知
@@ -46,11 +54,19 @@ impl WsHub {
     }
 }
 
-/// WebSocket 升级处理：接受连接，转发广播消息到客户端
+/// WebSocket 升级处理：校验 `?token=` 后接受连接，转发广播消息到客户端。
+/// token 缺失或无效时返回 401，不进行协议升级。
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
+    Query(query): Query<WsAuthQuery>,
     State(state): State<std::sync::Arc<crate::AppState>>,
-) -> impl IntoResponse {
+) -> Response {
+    let authorized = query.token.as_deref().is_some_and(|t| crate::auth::verify_token(t).is_ok());
+
+    if !authorized {
+        return StatusCode::UNAUTHORIZED.into_response();
+    }
+
     let rx = state.ws_hub.subscribe();
     ws.on_upgrade(move |socket| handle_socket(socket, rx))
 }
