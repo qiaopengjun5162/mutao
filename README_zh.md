@@ -40,24 +40,26 @@ cd frontend && pnpm install && pnpm run dev   # http://localhost:3001
 
 ## API 端点
 
-| 方法 | 路径 | 说明 |
-|---|---|---|
-| GET | /api/health | 健康检查 |
-| POST | /api/auth/register | 用户注册 |
-| POST | /api/auth/login | 用户登录 |
-| POST | /api/items | 创建物品 |
-| GET | /api/items | 物品列表 |
-| GET | /api/items/:id | 物品详情 |
-| POST | /api/items/:id/match | 触发匹配 |
-| PATCH | /api/items/:id/status | 更新物品状态 |
-| POST | /api/items/analyze | AI 标签提取 |
-| POST | /api/items/:id/attest | Web3 存证 |
-| GET | /api/items/:id/history | 链上历史 |
-| POST | /api/demands | 创建交换意向 |
-| GET | /api/demands | 意向列表 |
-| GET | /api/cycles | 交换环列表 |
-| POST | /api/cycles/:id/confirm | 确认交换 |
-| GET | /api/ws | WebSocket 实时通知 |
+| 方法 | 路径 | 说明 | 鉴权 |
+|---|---|---|---|
+| GET | /api/health | 健康检查 | 公开 |
+| POST | /api/auth/register | 用户注册 | 公开 |
+| POST | /api/auth/login | 用户登录 | 公开 |
+| POST | /api/items | 创建物品 | Bearer |
+| GET | /api/items | 物品列表 | 公开 |
+| GET | /api/items/:id | 物品详情 | 公开 |
+| POST | /api/items/:id/match | 触发匹配 | Bearer |
+| PATCH | /api/items/:id/status | 更新物品状态 | Bearer |
+| POST | /api/items/analyze | AI 标签提取 | Bearer |
+| POST | /api/items/:id/attest | Web3 存证 | Bearer |
+| GET | /api/items/:id/history | 链上历史 | 公开 |
+| POST | /api/demands | 创建交换意向 | Bearer |
+| GET | /api/demands | 意向列表 | 公开 |
+| GET | /api/cycles | 交换环列表 | 公开 |
+| POST | /api/cycles/:id/confirm | 确认交换 | Bearer |
+| GET | /api/ws | WebSocket 实时通知 | ?token= |
+
+> 鉴权：**公开** = 无需 token；**Bearer** = 需 `Authorization: Bearer <JWT>`，否则 401；**?token=** = JWT 通过 WebSocket 查询参数传入。物主限定的写操作对非物主返回 403。
 
 ## 项目结构
 

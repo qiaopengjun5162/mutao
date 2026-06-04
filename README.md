@@ -40,24 +40,26 @@ cd frontend && pnpm install && pnpm run dev   # http://localhost:3001
 
 ## API Endpoints
 
-| Method | Path | Description |
-|---|---|---|
-| GET | /api/health | Health check |
-| POST | /api/auth/register | User registration |
-| POST | /api/auth/login | User login |
-| POST | /api/items | Create item |
-| GET | /api/items | List items |
-| GET | /api/items/:id | Item detail |
-| POST | /api/items/:id/match | Trigger matching |
-| PATCH | /api/items/:id/status | Update item status |
-| POST | /api/items/analyze | AI tag extraction |
-| POST | /api/items/:id/attest | Web3 attestation |
-| GET | /api/items/:id/history | On-chain history |
-| POST | /api/demands | Create demand |
-| GET | /api/demands | List demands |
-| GET | /api/cycles | List swap cycles |
-| POST | /api/cycles/:id/confirm | Confirm swap |
-| GET | /api/ws | WebSocket notifications |
+| Method | Path | Description | Auth |
+|---|---|---|---|
+| GET | /api/health | Health check | Public |
+| POST | /api/auth/register | User registration | Public |
+| POST | /api/auth/login | User login | Public |
+| POST | /api/items | Create item | Bearer |
+| GET | /api/items | List items | Public |
+| GET | /api/items/:id | Item detail | Public |
+| POST | /api/items/:id/match | Trigger matching | Bearer |
+| PATCH | /api/items/:id/status | Update item status | Bearer |
+| POST | /api/items/analyze | AI tag extraction | Bearer |
+| POST | /api/items/:id/attest | Web3 attestation | Bearer |
+| GET | /api/items/:id/history | On-chain history | Public |
+| POST | /api/demands | Create demand | Bearer |
+| GET | /api/demands | List demands | Public |
+| GET | /api/cycles | List swap cycles | Public |
+| POST | /api/cycles/:id/confirm | Confirm swap | Bearer |
+| GET | /api/ws | WebSocket notifications | ?token= |
+
+> Auth: **Public** = no token; **Bearer** = `Authorization: Bearer <JWT>` required (401 otherwise); **?token=** = JWT passed as a WebSocket query param. Owner-scoped writes return 403 for non-owners.
 
 ## Project Structure
 
