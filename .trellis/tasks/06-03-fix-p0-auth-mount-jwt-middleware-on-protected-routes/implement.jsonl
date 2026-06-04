@@ -1,0 +1,1 @@
+{"file": ".trellis/tasks/06-03-fix-p0-auth-mount-jwt-middleware-on-protected-routes/prd.md", "reason": "Authoritative task spec — route protection matrix (R1), APP_ENV-based JWT_SECRET check (R2), owner/participant enforcement + AppError::Forbidden (R3), frontend token wiring (R4), full technical approach and affected-file list"}
