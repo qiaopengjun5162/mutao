@@ -67,6 +67,28 @@
           }
         ]
       }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/precompact-snapshot.py",
+            "timeout": 20
+          }
+        ]
+      },
+      {
+        "matcher": "manual",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/precompact-snapshot.py",
+            "timeout": 20
+          }
+        ]
+      }
     ]
   },
   "enabledPlugins": {}

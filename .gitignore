@@ -5,3 +5,5 @@ uploads/
 scalpel/__pycache__/
 scalpel/.pytest_cache/
 *.pyc
+# PreCompact 进度快照（运行时生成，不入库）
+.claude/auto-progress.md
