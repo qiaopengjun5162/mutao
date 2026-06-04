@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
-import { register as apiRegister } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export default function RegisterPage() {
   const [username, setUsername] = useState("");
@@ -24,7 +24,7 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      const res = await apiRegister({ username, password });
+      const res = await api.register({ username, password });
       login(res.token, res.user_id, res.username);
       router.push("/items");
     } catch (err: unknown) {

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
-import { login as apiLogin } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -19,7 +19,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await apiLogin({ username, password });
+      const res = await api.login({ username, password });
       login(res.token, res.user_id, res.username);
       router.push("/items");
     } catch (err: unknown) {

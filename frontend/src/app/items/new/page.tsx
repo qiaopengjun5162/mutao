@@ -36,7 +36,6 @@ export default function NewItemPage() {
     setSubmitting(true);
     try {
       await api.createItem({
-        owner_id: "00000000-0000-0000-0000-000000000001",
         title: form.title,
         description: form.description || undefined,
         tags,

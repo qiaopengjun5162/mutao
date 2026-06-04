@@ -51,8 +51,8 @@ export interface SwapCycle {
   created_at: string;
 }
 
+// owner_id 由后端从 JWT 推导，前端不再传入
 export interface CreateItemReq {
-  owner_id: string;
   title: string;
   description?: string;
   image_url?: string;
@@ -60,16 +60,25 @@ export interface CreateItemReq {
   value_tier: number;
 }
 
+// user_id 由后端从 JWT 推导，前端不再传入
 export interface CreateDemandReq {
-  user_id: string;
   offer_item_id: string;
   offer_tags: string[];
   target_tags: string[];
 }
 
+function authToken(): string | null {
+  return typeof window !== "undefined" ? localStorage.getItem("token") : null;
+}
+
+function authHeaders(): Record<string, string> {
+  const token = authToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     ...init,
   });
   if (!res.ok) {
@@ -134,6 +143,7 @@ export const api = {
     formData.append("file", file);
     return fetch(`${API_BASE}/api/items/${itemId}/image`, {
       method: "POST",
+      headers: authHeaders(),
       body: formData,
     }).then(async (res) => {
       if (!res.ok) {
@@ -156,10 +166,14 @@ export const api = {
     ),
 };
 
-// WebSocket 实时通知连接
+// WebSocket 实时通知连接（通过 ?token= 鉴权）
 export function connectWs(onMessage: (event: string, data: unknown) => void): () => void {
   const wsBase = API_BASE.replace(/^http/, "ws");
-  const ws = new WebSocket(`${wsBase}/api/ws`);
+  const token = authToken();
+  const url = token
+    ? `${wsBase}/api/ws?token=${encodeURIComponent(token)}`
+    : `${wsBase}/api/ws`;
+  const ws = new WebSocket(url);
   ws.onmessage = (e) => {
     try {
       const msg = JSON.parse(e.data);
